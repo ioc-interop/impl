@@ -4,7 +4,7 @@ declare(strict_types=1);
 namespace IocInterop\Impl;
 
 use stdClass;
-use IocInterop\Interface\IocContainer;
+use IocInterop\Interface\IocServiceBuilder;
 
 class ServicesTest extends \PHPUnit\Framework\TestCase
 {
@@ -29,21 +29,32 @@ class ServicesTest extends \PHPUnit\Framework\TestCase
         $services->getServiceInstance($name);
     }
 
-    public function testServiceFactory() : void
+    public function testServiceBuilder() : void
     {
         $name = stdClass::class;
-        $factory = fn (IocContainer $ioc) : stdClass => new stdClass();
         $services = new Services();
-        $this->assertFalse($services->hasServiceFactory($name));
-        $services->setServiceFactory($name, $factory);
-        $this->assertTrue($services->hasServiceFactory($name));
-        $actual = $services->getServiceFactory($name);
-        $this->assertSame($factory, $actual);
-        $services->unsetServiceFactory($name);
-        $this->assertFalse($services->hasServiceFactory($name));
-        $this->expectException(ContainerException::class);
-        $this->expectExceptionMessage("No factory for '{$name}'.");
-        $services->getServiceFactory($name);
+        $this->assertFalse($services->hasServiceBuilder($name));
+        $builder = $services->newServiceBuilder($name);
+        $services->setServiceBuilder($name, $builder);
+        $this->assertTrue($services->hasServiceBuilder($name));
+        $actual = $services->getServiceBuilder($name);
+        $this->assertSame($builder, $actual);
+        $again = $services->getServiceBuilder($name);
+        $this->assertSame($actual, $again);
+        $services->unsetServiceBuilder($name);
+        $this->assertFalse($services->hasServiceBuilder($name));
+    }
+
+    public function testServiceBuilder_implicitNewAndSet() : void
+    {
+        $name = stdClass::class;
+        $services = new Services();
+        $this->assertFalse($services->hasServiceBuilder($name));
+        $actual = $services->getServiceBuilder($name);
+        $this->assertInstanceOf(IocServiceBuilder::class, $actual);
+        $this->assertTrue($services->hasServiceBuilder($name));
+        $again = $services->getServiceBuilder($name);
+        $this->assertSame($actual, $again);
     }
 
     public function testServiceAlias() : void

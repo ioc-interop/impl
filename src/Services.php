@@ -3,24 +3,34 @@ declare(strict_types=1);
 
 namespace IocInterop\Impl;
 
+use IocInterop\Interface\IocServiceBuilder;
 use IocInterop\Interface\IocServices;
+use IocInterop\Interface\IocTypeAliases;
 
+/**
+ * @phpstan-import-type ioc_service_name_string from IocTypeAliases
+ */
 class Services implements IocServices
 {
     /**
-     * @var array<string, object>
+     * @var array<ioc_service_name_string, object>
      */
     protected array $instances = [];
 
     /**
-     * @var array<string, callable>
+     * @var array<ioc_service_name_string, IocServiceBuilder>
      */
-    protected array $factories = [];
+    protected array $builders = [];
 
     /**
-     * @var array<string, string>
+     * @var array<ioc_service_name_string, ioc_service_name_string>
      */
     protected array $aliases = [];
+
+    public function __construct(
+        protected ServiceResolver $serviceResolver = new ServiceResolver(),
+    ) {
+    }
 
     /**
      * @inheritdoc
@@ -60,34 +70,45 @@ class Services implements IocServices
     /**
      * @inheritdoc
      */
-    public function hasServiceFactory(string $serviceName) : bool
+    public function hasServiceBuilder(string $serviceName) : bool
     {
-        return isset($this->factories[$serviceName]);
+        return isset($this->builders[$serviceName]);
     }
 
     /**
      * @inheritdoc
      */
-    public function getServiceFactory(string $serviceName) : callable
+    public function getServiceBuilder(string $serviceName) : IocServiceBuilder
     {
-        return $this->factories[$serviceName]
-            ?? throw new ContainerException("No factory for '{$serviceName}'.");
+        $this->builders[$serviceName] ??= $this->newServiceBuilder($serviceName);
+        return $this->builders[$serviceName];
     }
 
     /**
      * @inheritdoc
      */
-    public function setServiceFactory(string $serviceName, callable $serviceFactory) : void
+    public function setServiceBuilder(string $serviceName, IocServiceBuilder $serviceBuilder) : void
     {
-        $this->factories[$serviceName] = $serviceFactory;
+        $this->builders[$serviceName] = $serviceBuilder;
     }
 
     /**
      * @inheritdoc
      */
-    public function unsetServiceFactory(string $serviceName) : void
+    public function unsetServiceBuilder(string $serviceName) : void
     {
-        unset($this->factories[$serviceName]);
+        unset($this->builders[$serviceName]);
+    }
+
+    /**
+     * @inheritdoc
+     */
+    public function newServiceBuilder(string $serviceName) : IocServiceBuilder
+    {
+        return new ServiceBuilder(
+            $serviceName,
+            $this->serviceResolver,
+        );
     }
 
     /**

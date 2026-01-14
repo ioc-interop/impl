@@ -14,29 +14,25 @@ class PublicContainerTest extends \PHPUnit\Framework\TestCase
     {
     }
 
-    public function testGetService() : void
+    public function testGetService_instance() : void
     {
         $name = stdClass::class;
         $instance = new stdClass();
         $ioc = new PublicContainer();
-        $this->assertFalse($ioc->hasService($name));
         $ioc->setServiceInstance($name, $instance);
-        $this->assertTrue($ioc->hasService($name));
         $actual = $ioc->getService($name);
         $this->assertSame($instance, $actual);
         $again = $ioc->getService($name);
         $this->assertSame($actual, $again);
     }
 
-    public function testGetService_aliased() : void
+    public function testGetService_aliasedInstance() : void
     {
         $name = 'foo';
         $alias = stdClass::class;
         $instance = new stdClass();
         $ioc = new PublicContainer();
-        $this->assertFalse($ioc->hasService($name));
         $ioc->setServiceAlias($name, $alias);
-        $this->assertFalse($ioc->hasService($name));
         $ioc->setServiceInstance($alias, $instance);
         $this->assertTrue($ioc->hasService($name));
         $actual = $ioc->getService($name);
@@ -45,31 +41,25 @@ class PublicContainerTest extends \PHPUnit\Framework\TestCase
         $this->assertSame($actual, $again);
     }
 
-    public function testGetService_new() : void
+    public function testGetService_builder() : void
     {
         $name = stdClass::class;
-        $factory = fn (IocContainer $ioc) : stdClass => new stdClass();
         $ioc = new PublicContainer();
-        $this->assertFalse($ioc->hasService($name));
-        $ioc->setServiceFactory($name, $factory);
-        $this->assertTrue($ioc->hasService($name));
+        $ioc->getServiceBuilder($name);
         $actual = $ioc->getService($name);
         $this->assertInstanceOf($name, $actual);
         $again = $ioc->getService($name);
         $this->assertSame($actual, $again);
     }
 
-    public function testGetService_aliasedNew() : void
+    public function testGetService_aliasedBuilder() : void
     {
         $name = 'foo';
         $alias = stdClass::class;
         $factory = fn (IocContainer $ioc) : stdClass => new stdClass();
         $ioc = new PublicContainer();
-        $this->assertFalse($ioc->hasService($name));
         $ioc->setServiceAlias($name, $alias);
-        $this->assertFalse($ioc->hasService($name));
-        $ioc->setServiceFactory($alias, $factory);
-        $this->assertTrue($ioc->hasService($name));
+        $ioc->getServiceBuilder($alias);
         $actual = $ioc->getService($name);
         $this->assertInstanceOf($alias, $actual);
         $again = $ioc->getService($name);
@@ -81,8 +71,7 @@ class PublicContainerTest extends \PHPUnit\Framework\TestCase
         $name = stdClass::class;
         $factory = fn (IocContainer $ioc) : stdClass => new stdClass();
         $ioc = new PublicContainer();
-        $this->assertFalse($ioc->hasService($name));
-        $ioc->setServiceFactory($name, $factory);
+        $ioc->getServiceBuilder($name);
         $this->assertTrue($ioc->hasService($name));
         $actual = $ioc->newService($name);
         $this->assertInstanceOf($name, $actual);
@@ -96,14 +85,19 @@ class PublicContainerTest extends \PHPUnit\Framework\TestCase
         $alias = stdClass::class;
         $factory = fn (IocContainer $ioc) : stdClass => new stdClass();
         $ioc = new PublicContainer();
-        $this->assertFalse($ioc->hasService($name));
         $ioc->setServiceAlias($name, $alias);
-        $this->assertFalse($ioc->hasService($name));
-        $ioc->setServiceFactory($alias, $factory);
-        $this->assertTrue($ioc->hasService($name));
+        $ioc->getServiceBuilder($alias);
         $actual = $ioc->newService($name);
         $this->assertInstanceOf($alias, $actual);
         $again = $ioc->newService($name);
         $this->assertNotSame($actual, $again);
+    }
+
+    public function testCircularPrevention() : void
+    {
+        $ioc = new PublicContainer();
+        $this->expectException(ContainerException::class);
+        $this->expectExceptionMessage("Circular dependency: IocInterop\Impl\FakeServiceCircularFoo, IocInterop\Impl\FakeServiceCircularBar, IocInterop\Impl\FakeServiceCircularFoo");
+        $ioc->getService(FakeServiceCircularFoo::class);
     }
 }

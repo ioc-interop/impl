@@ -6,7 +6,7 @@ namespace IocInterop\Impl;
 use SplFileObject;
 use stdClass;
 
-class FakeServiceBroken implements FakeServiceInterface
+class FakeServiceUnionType implements FakeServiceInterface
 {
     public function __construct(
         public SplFileObject|stdClass $dependency

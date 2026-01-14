@@ -48,7 +48,7 @@ class ProtectedContainerTest extends \PHPUnit\Framework\TestCase
         $name = stdClass::class;
         $factory = fn (IocContainer $ioc) : stdClass => new stdClass();
         $services = new Services();
-        $services->setServiceFactory($name, $factory);
+        $services->getServiceBuilder($name)->setServiceFactory($factory);
         $ioc = new ProtectedContainer($services);
 
         // act & assert
@@ -66,7 +66,7 @@ class ProtectedContainerTest extends \PHPUnit\Framework\TestCase
         $factory = fn (IocContainer $ioc) : stdClass => new stdClass();
         $services = new Services();
         $services->setServiceAlias($name, $alias);
-        $services->setServiceFactory($alias, $factory);
+        $services->getServiceBuilder($alias)->setServiceFactory($factory);
         $ioc = new ProtectedContainer($services);
 
         // act & assert
@@ -82,7 +82,7 @@ class ProtectedContainerTest extends \PHPUnit\Framework\TestCase
         $name = stdClass::class;
         $factory = fn (IocContainer $ioc) : stdClass => new stdClass();
         $services = new Services();
-        $services->setServiceFactory($name, $factory);
+        $services->getServiceBuilder($name)->setServiceFactory($factory);
         $ioc = new ProtectedContainer($services);
 
         // act & assert
@@ -100,7 +100,7 @@ class ProtectedContainerTest extends \PHPUnit\Framework\TestCase
         $factory = fn (IocContainer $ioc) : stdClass => new stdClass();
         $services = new Services();
         $services->setServiceAlias($name, $alias);
-        $services->setServiceFactory($alias, $factory);
+        $services->getServiceBuilder($alias)->setServiceFactory($factory);
         $ioc = new ProtectedContainer($services);
 
         // act & assert
@@ -114,7 +114,7 @@ class ProtectedContainerTest extends \PHPUnit\Framework\TestCase
     {
         $services = new Services();
         $services->setServiceInstance('foo', new stdClass());
-        $services->setServiceFactory('bar', fn (IocContainer $ioc) => new stdClass());
+        $services->getServiceBuilder('bar')->setServiceFactory(fn (IocContainer $ioc) => new stdClass());
         $services->setServiceAlias('baz', 'foo');
         $ioc = new ProtectedContainer($services);
 
@@ -122,5 +122,14 @@ class ProtectedContainerTest extends \PHPUnit\Framework\TestCase
         $this->assertTrue($ioc->hasService('bar'));
         $this->assertTrue($ioc->hasService('baz'));
         $this->assertFalse($ioc->hasService('dib'));
+    }
+
+
+    public function testCircularPrevention() : void
+    {
+        $ioc = new ProtectedContainer();
+        $this->expectException(ContainerException::class);
+        $this->expectExceptionMessage("Circular dependency: IocInterop\Impl\FakeServiceCircularFoo, IocInterop\Impl\FakeServiceCircularBar, IocInterop\Impl\FakeServiceCircularFoo");
+        $ioc->getService(FakeServiceCircularFoo::class);
     }
 }

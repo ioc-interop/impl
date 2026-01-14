@@ -13,7 +13,14 @@ class PublicContainer extends Services implements IocContainer
     /**
      * @var array<string,bool>
      */
-    protected array $instantiating = [];
+    protected array $building = [];
+
+    public function __construct(
+        protected ServiceResolver $serviceResolver = new ServiceResolver(),
+    ) {
+        parent::__construct($serviceResolver);
+        $this->setServiceInstance(IocContainer::class, $this);
+    }
 
     /**
      * @inheritdoc
@@ -30,6 +37,8 @@ class PublicContainer extends Services implements IocContainer
 
     /**
      * @inheritdoc
+     *
+     * @todo is there any case where we *cannot* create an instance?
      */
     public function hasService(string $serviceName) : bool
     {
@@ -38,7 +47,7 @@ class PublicContainer extends Services implements IocContainer
             : $serviceName;
 
         return $this->hasServiceInstance($serviceName)
-            || $this->hasServiceFactory($serviceName);
+            || $this->getServiceBuilder($serviceName)->isServiceBuildable();
     }
 
     /**
@@ -50,16 +59,20 @@ class PublicContainer extends Services implements IocContainer
             ? $this->getServiceAlias($serviceName)
             : $serviceName;
 
-        $circular = $this->instantiating[$serviceName] ?? false;
+        $circular = $this->building[$serviceName] ?? false;
 
         if ($circular) {
-            throw new ContainerException("Circular dependency");
+            $message = implode(", ", array_keys($this->building)) . ", $serviceName";
+            throw new ContainerException("Circular dependency: $message");
         }
 
-        $this->instantiating[$serviceName] = true;
-        $serviceFactory = $this->getServiceFactory($serviceName);
-        $instance = $serviceFactory($this);
-        unset($this->instantiating[$serviceName]);
+        $this->building[$serviceName] = true;
+
+        $instance = $this
+            ->getServiceBuilder($serviceName)
+            ->buildService($this);
+
+        unset($this->building[$serviceName]);
         return $instance;
     }
 }

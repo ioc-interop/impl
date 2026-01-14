@@ -14,10 +14,11 @@ class ProtectedContainer implements IocContainer
     /**
      * @var array<string,bool>
      */
-    protected array $instantiating = [];
+    protected array $building = [];
 
-    public function __construct(protected IocServices $services)
+    public function __construct(protected IocServices $services = new Services())
     {
+        $this->services->setServiceInstance(IocContainer::class, $this);
     }
 
     /**
@@ -41,6 +42,8 @@ class ProtectedContainer implements IocContainer
 
     /**
      * @inheritdoc
+     *
+     * @todo is there any case where we *cannot* create an instance?
      */
     public function hasService(string $serviceName) : bool
     {
@@ -49,7 +52,7 @@ class ProtectedContainer implements IocContainer
             : $serviceName;
 
         return $this->services->hasServiceInstance($serviceName)
-            || $this->services->hasServiceFactory($serviceName);
+            || $this->services->getServiceBuilder($serviceName)->isServiceBuildable();
     }
 
     /**
@@ -61,21 +64,21 @@ class ProtectedContainer implements IocContainer
             ? $this->services->getServiceAlias($serviceName)
             : $serviceName;
 
-        return $this->instantiate($serviceName);
-    }
-
-    protected function instantiate(string $serviceName) : object
-    {
-        $circular = $this->instantiating[$serviceName] ?? false;
+        $circular = $this->building[$serviceName] ?? false;
 
         if ($circular) {
-            throw new ContainerException("Circular dependency");
+            $message = implode(", ", array_keys($this->building)) . ", $serviceName";
+            throw new ContainerException("Circular dependency: $message");
         }
 
-        $this->instantiating[$serviceName] = true;
-        $serviceFactory = $this->services->getServiceFactory($serviceName);
-        $instance = $serviceFactory($this);
-        unset($this->instantiating[$serviceName]);
+        $this->building[$serviceName] = true;
+
+        $instance = $this
+            ->services
+            ->getServiceBuilder($serviceName)
+            ->buildService($this);
+
+        unset($this->building[$serviceName]);
         return $instance;
     }
 }
