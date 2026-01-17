@@ -4,6 +4,7 @@ declare(strict_types=1);
 namespace IocInterop\Impl;
 
 use IocInterop\Interface\IocContainer;
+use IocInterop\Interface\IocServiceResolver;
 
 /**
  * Typical container that allows in-flight resetting of services.
@@ -16,7 +17,7 @@ class PublicContainer extends Services implements IocContainer
     protected array $building = [];
 
     public function __construct(
-        protected ServiceResolver $serviceResolver = new ServiceResolver(),
+        protected IocServiceResolver $serviceResolver = new ServiceResolver(),
     ) {
         parent::__construct($serviceResolver);
         $this->setServiceInstance(IocContainer::class, $this);
@@ -53,7 +54,10 @@ class PublicContainer extends Services implements IocContainer
     /**
      * @inheritdoc
      */
-    public function newService(string $serviceName) : object
+    public function newService(
+        string $serviceName,
+        array $serviceArgs = [],
+    ) : object
     {
         $serviceName = $this->hasServiceAlias($serviceName)
             ? $this->getServiceAlias($serviceName)
@@ -68,11 +72,11 @@ class PublicContainer extends Services implements IocContainer
 
         $this->building[$serviceName] = true;
 
-        $instance = $this
+        $service = $this
             ->getServiceBuilder($serviceName)
-            ->buildService($this);
+            ->buildService($this, $serviceArgs);
 
         unset($this->building[$serviceName]);
-        return $instance;
+        return $service;
     }
 }

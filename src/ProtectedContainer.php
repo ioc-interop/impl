@@ -58,7 +58,7 @@ class ProtectedContainer implements IocContainer
     /**
      * @inheritdoc
      */
-    public function newService(string $serviceName) : object
+    public function newService(string $serviceName, array $serviceArgs = []) : object
     {
         $serviceName = $this->services->hasServiceAlias($serviceName)
             ? $this->services->getServiceAlias($serviceName)
@@ -76,7 +76,7 @@ class ProtectedContainer implements IocContainer
         $instance = $this
             ->services
             ->getServiceBuilder($serviceName)
-            ->buildService($this);
+            ->buildService($this, $serviceArgs);
 
         unset($this->building[$serviceName]);
         return $instance;

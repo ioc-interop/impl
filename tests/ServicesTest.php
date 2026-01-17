@@ -72,5 +72,21 @@ class ServicesTest extends \PHPUnit\Framework\TestCase
         $this->expectException(ContainerException::class);
         $this->expectExceptionMessage("No alias for '{$name}'.");
         $services->getServiceAlias($name);
+
+        // recursive aliasing
+        $services->setServiceAlias('bar.baz', 'foo.bar');
+        $actual = $services->getServiceAlias('bar.baz');
+        $this->assertSame($alias, $actual);
+    }
+
+    public function testServiceAlias_circular() : void
+    {
+        $services = new Services();
+        $services->setServiceAlias('foo', 'bar');
+        $services->setServiceAlias('bar', 'baz');
+        $services->setServiceAlias('baz', 'dib');
+
+        $this->expectException(ContainerException::class);
+        $services->setServiceAlias('dib', 'foo');
     }
 }

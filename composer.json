@@ -15,7 +15,8 @@
     ],
     "require": {
         "php": "^8.4",
-        "ioc-interop/interface": "1.x@dev"
+        "ioc-interop/interface": "1.x@dev",
+        "env-interop/interface": "1.x@dev"
     },
     "autoload": {
         "psr-4" : {

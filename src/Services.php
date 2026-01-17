@@ -5,6 +5,7 @@ namespace IocInterop\Impl;
 
 use IocInterop\Interface\IocServiceBuilder;
 use IocInterop\Interface\IocServices;
+use IocInterop\Interface\IocServiceResolver;
 use IocInterop\Interface\IocTypeAliases;
 
 /**
@@ -28,8 +29,9 @@ class Services implements IocServices
     protected array $aliases = [];
 
     public function __construct(
-        protected ServiceResolver $serviceResolver = new ServiceResolver(),
+        protected IocServiceResolver $serviceResolver = new ServiceResolver(),
     ) {
+        $this->instances[IocServiceResolver::class] = $serviceResolver;
     }
 
     /**
@@ -124,8 +126,15 @@ class Services implements IocServices
      */
     public function getServiceAlias(string $serviceName) : string
     {
-        return $this->aliases[$serviceName]
-            ?? throw new ContainerException("No alias for '{$serviceName}'.");
+        if (! isset($this->aliases[$serviceName])) {
+            throw new ContainerException("No alias for '{$serviceName}'.");
+        }
+
+        while (isset($this->aliases[$serviceName])) {
+            $serviceName = $this->aliases[$serviceName];
+        }
+
+        return $serviceName;
     }
 
     /**
@@ -133,6 +142,17 @@ class Services implements IocServices
      */
     public function setServiceAlias(string $serviceName, string $serviceAlias) : void
     {
+        $circular = [];
+
+        while (isset($this->aliases[$serviceAlias])) {
+            if (isset($circular[$serviceAlias])) {
+                throw new ContainerException("Circular alias");
+            }
+
+            $serviceAlias = $this->aliases[$serviceAlias];
+            $circular[$serviceAlias] = true;
+        }
+
         $this->aliases[$serviceName] = $serviceAlias;
     }
 

@@ -38,7 +38,7 @@ class FakeContainer implements IocContainer
     /**
      * @inheritdoc
      */
-    public function newService(string $serviceName) : object
+    public function newService(string $serviceName, array $serviceArgs = []) : object
     {
         throw new ContainerException("Null container");
     }

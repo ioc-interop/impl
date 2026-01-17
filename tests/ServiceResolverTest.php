@@ -4,8 +4,8 @@ declare(strict_types=1);
 namespace IocInterop\Impl;
 
 use IocInterop\Interface\IocContainer;
+use EnvInterop\Interface\EnvGetter;
 use stdClass;
-use DateTimeInterface;
 
 class ServiceResolverTest extends \PHPUnit\Framework\TestCase
 {
@@ -25,20 +25,41 @@ class ServiceResolverTest extends \PHPUnit\Framework\TestCase
         // assemble
         $ioc = new PublicContainer();
 
+        $ioc->setServiceAlias(EnvGetter::class, FakeGetEnv::class);
+
+        $ioc->getServiceBuilder(FakeGetEnv::class)
+            ->addServiceExtender(function (IocContainer $ioc, FakeGetEnv $env) {
+                $env->vars = [
+                    'BAZ' => 'BAZ-value',
+                    'DIB' => '88'
+                ];
+
+                return $env;
+            });
+
         $ioc->getServiceBuilder('foo')
-            ->setServiceFactory(fn ($ioc) => (object) ['value' => 'foo']);
+            ->setServiceFactory(fn (IocContainer $ioc) : stdClass =>
+                (object) ['value' => 'foo']);
 
         $ioc->getServiceBuilder('bar')
-            ->setServiceFactory(fn ($ioc) => (object) ['value' => 'bar']);
+            ->setServiceFactory(fn (IocContainer $ioc) : stdClass =>
+                (object) ['value' => 'bar']);
 
         $serviceResolver = new ServiceResolver();
         $service = $serviceResolver->resolveService($ioc, FakeServiceWithAttributes::class);
         $this->assertSame($service->foo->value, 'foo');
         $this->assertSame($service->bar->value, 'bar');
+        $this->assertSame($service->baz, 'BAZ-value');
+        $this->assertSame($service->dib, 88);
+        $this->assertNull($service->gir);
 
         $again = $serviceResolver->resolveService($ioc, FakeServiceWithAttributes::class);
         $this->assertSame($service->foo, $again->foo);
         $this->assertNotSame($service->bar, $again->bar);
+        $this->assertSame($service->bar->value, 'bar');
+        $this->assertSame($service->baz, 'BAZ-value');
+        $this->assertSame($service->dib, 88);
+        $this->assertNull($service->gir);
     }
 
     public function testNotResolvable() : void
