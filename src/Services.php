@@ -5,7 +5,7 @@ namespace IocInterop\Impl;
 
 use IocInterop\Interface\IocServiceBuilder;
 use IocInterop\Interface\IocServices;
-use IocInterop\Interface\IocServiceResolver;
+use IocInterop\Interface\IocClassResolver;
 use IocInterop\Interface\IocTypeAliases;
 
 /**
@@ -27,12 +27,6 @@ class Services implements IocServices
      * @var array<ioc_service_name_string, ioc_service_name_string>
      */
     protected array $aliases = [];
-
-    public function __construct(
-        protected IocServiceResolver $serviceResolver = new ServiceResolver(),
-    ) {
-        $this->instances[IocServiceResolver::class] = $serviceResolver;
-    }
 
     /**
      * @inheritdoc
@@ -107,10 +101,7 @@ class Services implements IocServices
      */
     public function newServiceBuilder(string $serviceName) : IocServiceBuilder
     {
-        return new ServiceBuilder(
-            $serviceName,
-            $this->serviceResolver,
-        );
+        return new ServiceBuilder($serviceName);
     }
 
     /**

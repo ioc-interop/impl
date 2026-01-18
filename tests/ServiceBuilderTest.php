@@ -3,21 +3,23 @@ declare(strict_types=1);
 
 namespace IocInterop\Impl;
 
-use stdClass;
+use IocInterop\Impl\Fake\FakeContainer;
+use IocInterop\Impl\Resolver\ClassResolver;
 use IocInterop\Interface\IocContainer;
+use stdClass;
 
 class ServiceBuilderTest extends \PHPUnit\Framework\TestCase
 {
-    protected ServiceResolver $serviceResolver;
+    protected ClassResolver $classResolver;
 
     protected function setUp() : void
     {
-        $this->serviceResolver = new ServiceResolver();
+        $this->classResolver = new ClassResolver();
     }
 
     protected function newServiceBuilder(string $name) : ServiceBuilder
     {
-        return new ServiceBuilder($name, $this->serviceResolver);
+        return new ServiceBuilder($name);
     }
 
     public function testServiceFactory() : void

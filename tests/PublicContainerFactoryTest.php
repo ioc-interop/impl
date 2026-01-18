@@ -3,6 +3,7 @@ declare(strict_types=1);
 
 namespace IocInterop\Impl;
 
+use IocInterop\Impl\Fake\FakeProvider;
 use stdClass;
 
 class PublicContainerFactoryTest extends \PHPUnit\Framework\TestCase

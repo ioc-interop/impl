@@ -1,11 +1,11 @@
 <?php
 declare(strict_types=1);
 
-namespace IocInterop\Impl;
+namespace IocInterop\Impl\Attribute;
 
 use Attribute;
-use IocInterop\Interface\IocParameterResolver;
 use IocInterop\Interface\IocContainer;
+use IocInterop\Interface\Resolver\IocParameterResolver;
 use ReflectionParameter;
 
 #[Attribute(Attribute::TARGET_PARAMETER)]

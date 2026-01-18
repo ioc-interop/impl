@@ -6,7 +6,7 @@ namespace IocInterop\Impl;
 use Closure;
 use IocInterop\Interface\IocContainer;
 use IocInterop\Interface\IocServiceBuilder;
-use IocInterop\Interface\IocServiceResolver;
+use IocInterop\Interface\Resolver\IocClassResolver;
 use IocInterop\Interface\IocTypeAliases;
 use ReflectionFunction;
 use ReflectionParameter;
@@ -33,22 +33,8 @@ class ServiceBuilder implements IocServiceBuilder
      */
     protected array $serviceExtenders = [];
 
-    /**
-     * @param ioc_service_name_string $serviceName
-     */
-    public function __construct(
-        protected string $serviceName,
-        protected IocServiceResolver $serviceResolver,
-    ) {
-    }
-
-    /**
-     * @inheritdoc
-     */
-    public function isServiceBuildable() : bool
+    public function __construct(protected string $serviceName)
     {
-        return $this->hasServiceFactory()
-            || $this->serviceResolver->isServiceResolvable($this->serviceName);
     }
 
     /**
@@ -187,11 +173,13 @@ class ServiceBuilder implements IocServiceBuilder
     {
         $service = $this->hasServiceFactory()
             ? $this->runServiceFactory($ioc, $serviceArgs)
-            : $this->serviceResolver->resolveService(
-                $ioc,
-                $this->serviceName,
-                $serviceArgs,
-            );
+            : $ioc
+                ->getService(IocClassResolver::class)
+                ->resolveService(
+                    $ioc,
+                    $this->serviceName,
+                    $serviceArgs,
+                );
 
         foreach ($this->getServiceExtenders() as $serviceExtender) {
             $service = $serviceExtender($ioc, $service);

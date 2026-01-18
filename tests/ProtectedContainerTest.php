@@ -3,6 +3,7 @@ declare(strict_types=1);
 
 namespace IocInterop\Impl;
 
+use IocInterop\Impl\Fake\FakeServiceCircularFoo;;
 use IocInterop\Interface\IocContainer;
 use stdClass;
 
@@ -124,12 +125,11 @@ class ProtectedContainerTest extends \PHPUnit\Framework\TestCase
         $this->assertFalse($ioc->hasService('dib'));
     }
 
-
     public function testCircularPrevention() : void
     {
         $ioc = new ProtectedContainer();
         $this->expectException(ContainerException::class);
-        $this->expectExceptionMessage("Circular dependency: IocInterop\Impl\FakeServiceCircularFoo, IocInterop\Impl\FakeServiceCircularBar, IocInterop\Impl\FakeServiceCircularFoo");
+        $this->expectExceptionMessage("Circular dependency: IocInterop\Impl\Fake\FakeServiceCircularFoo, IocInterop\Impl\Fake\FakeServiceCircularBar, IocInterop\Impl\Fake\FakeServiceCircularFoo");
         $ioc->getService(FakeServiceCircularFoo::class);
     }
 }

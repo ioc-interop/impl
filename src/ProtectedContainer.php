@@ -5,6 +5,8 @@ namespace IocInterop\Impl;
 
 use IocInterop\Interface\IocContainer;
 use IocInterop\Interface\IocServices;
+use IocInterop\Interface\Resolver\IocClassResolver;
+use IocInterop\Impl\Resolver\ClassResolver;
 
 /**
  * A container of predefined services that cannot be reset in-flight.
@@ -16,9 +18,12 @@ class ProtectedContainer implements IocContainer
      */
     protected array $building = [];
 
-    public function __construct(protected IocServices $services = new Services())
-    {
+    public function __construct(
+        protected IocServices $services = new Services(),
+        protected IocClassResolver $classResolver = new ClassResolver(),
+    ) {
         $this->services->setServiceInstance(IocContainer::class, $this);
+        $this->services->setServiceInstance(IocClassResolver::class, $classResolver);
     }
 
     /**
@@ -51,8 +56,20 @@ class ProtectedContainer implements IocContainer
             ? $this->services->getServiceAlias($serviceName)
             : $serviceName;
 
-        return $this->services->hasServiceInstance($serviceName)
-            || $this->services->getServiceBuilder($serviceName)->isServiceBuildable();
+        if ($this->services->hasServiceInstance($serviceName)) {
+            return true;
+        }
+
+        $hasBuilderAndFactory = $this->services->hasServiceBuilder($serviceName)
+            && $this->services->getServiceBuilder($serviceName)->hasServiceFactory();
+
+        if ($hasBuilderAndFactory) {
+            return true;
+        }
+
+        return $this
+            ->getService(IocClassResolver::class)
+            ->isServiceResolvable($serviceName);
     }
 
     /**
@@ -73,12 +90,16 @@ class ProtectedContainer implements IocContainer
 
         $this->building[$serviceName] = true;
 
-        $instance = $this
-            ->services
-            ->getServiceBuilder($serviceName)
-            ->buildService($this, $serviceArgs);
+        $service = $this->services->hasServiceBuilder($serviceName)
+            ? $this
+                ->services
+                ->getServiceBuilder($serviceName)
+                ->buildService($this, $serviceArgs)
+            : $this
+                ->getService(IocClassResolver::class)
+                ->resolveService($this, $serviceName, $serviceArgs);
 
         unset($this->building[$serviceName]);
-        return $instance;
+        return $service;
     }
 }

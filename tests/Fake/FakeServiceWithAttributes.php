@@ -1,8 +1,11 @@
 <?php
 declare(strict_types=1);
 
-namespace IocInterop\Impl;
+namespace IocInterop\Impl\Fake;
 
+use IocInterop\Impl\Attribute\GetEnv;
+use IocInterop\Impl\Attribute\GetService;
+use IocInterop\Impl\Attribute\NewService;
 use stdClass;
 
 class FakeServiceWithAttributes

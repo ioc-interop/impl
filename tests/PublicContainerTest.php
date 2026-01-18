@@ -4,6 +4,7 @@ declare(strict_types=1);
 namespace IocInterop\Impl;
 
 use IocInterop\Interface\IocContainer;
+use IocInterop\Impl\Fake\FakeServiceCircularFoo;
 use stdClass;
 
 class PublicContainerTest extends \PHPUnit\Framework\TestCase
@@ -97,7 +98,7 @@ class PublicContainerTest extends \PHPUnit\Framework\TestCase
     {
         $ioc = new PublicContainer();
         $this->expectException(ContainerException::class);
-        $this->expectExceptionMessage("Circular dependency: IocInterop\Impl\FakeServiceCircularFoo, IocInterop\Impl\FakeServiceCircularBar, IocInterop\Impl\FakeServiceCircularFoo");
+        $this->expectExceptionMessage("Circular dependency: IocInterop\Impl\Fake\FakeServiceCircularFoo, IocInterop\Impl\Fake\FakeServiceCircularBar, IocInterop\Impl\Fake\FakeServiceCircularFoo");
         $ioc->getService(FakeServiceCircularFoo::class);
     }
 }

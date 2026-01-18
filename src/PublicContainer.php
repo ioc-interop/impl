@@ -4,7 +4,8 @@ declare(strict_types=1);
 namespace IocInterop\Impl;
 
 use IocInterop\Interface\IocContainer;
-use IocInterop\Interface\IocServiceResolver;
+use IocInterop\Interface\Resolver\IocClassResolver;
+use IocInterop\Impl\Resolver\ClassResolver;
 
 /**
  * Typical container that allows in-flight resetting of services.
@@ -17,10 +18,10 @@ class PublicContainer extends Services implements IocContainer
     protected array $building = [];
 
     public function __construct(
-        protected IocServiceResolver $serviceResolver = new ServiceResolver(),
+        protected IocClassResolver $classResolver = new ClassResolver(),
     ) {
-        parent::__construct($serviceResolver);
         $this->setServiceInstance(IocContainer::class, $this);
+        $this->setServiceInstance(IocClassResolver::class, $classResolver);
     }
 
     /**
@@ -38,8 +39,6 @@ class PublicContainer extends Services implements IocContainer
 
     /**
      * @inheritdoc
-     *
-     * @todo is there any case where we *cannot* create an instance?
      */
     public function hasService(string $serviceName) : bool
     {
@@ -47,8 +46,20 @@ class PublicContainer extends Services implements IocContainer
             ? $this->getServiceAlias($serviceName)
             : $serviceName;
 
-        return $this->hasServiceInstance($serviceName)
-            || $this->getServiceBuilder($serviceName)->isServiceBuildable();
+        if ($this->hasServiceInstance($serviceName)) {
+            return true;
+        }
+
+        $hasBuilderAndFactory = $this->hasServiceBuilder($serviceName)
+            && $this->getServiceBuilder($serviceName)->hasServiceFactory();
+
+        if ($hasBuilderAndFactory) {
+            return true;
+        }
+
+        return $this
+            ->getService(IocClassResolver::class)
+            ->isServiceResolvable($serviceName);
     }
 
     /**
@@ -72,9 +83,13 @@ class PublicContainer extends Services implements IocContainer
 
         $this->building[$serviceName] = true;
 
-        $service = $this
-            ->getServiceBuilder($serviceName)
-            ->buildService($this, $serviceArgs);
+        $service = $this->hasServiceBuilder($serviceName)
+            ? $this
+                ->getServiceBuilder($serviceName)
+                ->buildService($this, $serviceArgs)
+            : $this
+                ->getService(IocClassResolver::class)
+                ->resolveService($this, $serviceName, $serviceArgs);
 
         unset($this->building[$serviceName]);
         return $service;

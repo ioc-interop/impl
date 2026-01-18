@@ -1,18 +1,20 @@
 <?php
 declare(strict_types=1);
 
-namespace IocInterop\Impl;
+namespace IocInterop\Impl\Fake;
 
+use IocInterop\Impl\ContainerException;
+use IocInterop\Impl\Resolver\ClassResolver;
 use IocInterop\Interface\IocContainer;
-use IocInterop\Interface\IocServiceResolver;
+use IocInterop\Interface\Resolver\IocClassResolver;
 
 class FakeContainer implements IocContainer
 {
-    protected IocServiceResolver $serviceResolver;
+    protected IocClassResolver $classResolver;
 
     public function __construct()
     {
-        $this->serviceResolver = new ServiceResolver();
+        $this->classResolver = new ClassResolver();
     }
 
     /**
@@ -20,8 +22,8 @@ class FakeContainer implements IocContainer
      */
     public function getService(string $serviceName) : object
     {
-        if ($serviceName === IocServiceResolver::class) {
-            return $this->serviceResolver;
+        if ($serviceName === IocClassResolver::class) {
+            return $this->classResolver;
         }
 
         throw new ContainerException("Null container");

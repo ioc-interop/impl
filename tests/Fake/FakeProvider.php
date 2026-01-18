@@ -1,7 +1,7 @@
 <?php
 declare(strict_types=1);
 
-namespace IocInterop\Impl;
+namespace IocInterop\Impl\Fake;
 
 use IocInterop\Interface\IocContainer;
 use IocInterop\Interface\IocServicesProvider;
