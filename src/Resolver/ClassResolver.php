@@ -6,7 +6,7 @@ namespace IocInterop\Impl\Resolver;
 use IocInterop\Impl\ContainerException;
 use IocInterop\Interface\IocContainer;
 use IocInterop\Interface\Resolver\IocClassResolver;
-use IocInterop\Interface\Resolver\IocParameterResolver;
+use IocInterop\Interface\Resolver\IocParametersResolver;
 use ReflectionAttribute;
 use ReflectionClass;
 use ReflectionNamedType;
@@ -23,6 +23,11 @@ class ClassResolver implements IocClassResolver
      * @var list<string>
      */
     protected array $resolving = [];
+
+    public function __construct(
+        protected IocParametersResolver $parametersResolver = new ParametersResolver(),
+    ) {
+    }
 
     /**
      * @inheritdoc
@@ -56,16 +61,11 @@ class ClassResolver implements IocClassResolver
             ?->getParameters()
             ?? [];
 
-        foreach ($parameters as $parameter) {
-            $parameterName = $parameter->getName();
-
-            if (! array_key_exists($parameterName, $serviceArgs)) {
-                $serviceArgs[$parameterName] = $this->resolveConstructorParameter(
-                    $ioc,
-                    $parameter,
-                );
-            }
-        }
+        $serviceArgs = $this->parametersResolver->resolveParameters(
+            $ioc,
+            $parameters,
+            $serviceArgs,
+        );
 
         $service = new $class(...$serviceArgs);
         array_pop($this->resolving);
@@ -81,58 +81,5 @@ class ClassResolver implements IocClassResolver
         /** @var class-string $class */
         $this->reflection[$class] ??= new ReflectionClass($class);
         return $this->reflection[$class];
-    }
-
-    protected function resolveConstructorParameter(
-        IocContainer $ioc,
-        ReflectionParameter $parameter,
-    ) : mixed
-    {
-        /** @var ReflectionAttribute<object>[] */
-        $attributes = $parameter->getAttributes();
-
-        foreach ($attributes as $attribute) {
-            if (is_a($attribute->name, IocParameterResolver::class, true)) {
-                /** @var IocParameterResolver $parameterResolver */
-                $parameterResolver = $attribute->newInstance();
-                return $parameterResolver->resolveParameter($ioc, $parameter);
-            }
-        }
-
-        $parameterType = $parameter->getType();
-
-        if (! $parameterType instanceof ReflectionNamedType) {
-            return $this->resolveConstructorParameterFromDefault(
-                $parameter,
-            );
-        }
-
-        $parameterClass = $parameterType->getName();
-
-        if ($ioc->hasService($parameterClass)) {
-            return $ioc->getService($parameterClass);
-        }
-
-        return $this->resolveConstructorParameterFromDefault($parameter);
-    }
-
-    protected function resolveConstructorParameterFromDefault(
-        ReflectionParameter $parameter,
-    ) : mixed
-    {
-        if ($parameter->isDefaultValueAvailable()) {
-            return $parameter->getDefaultValue();
-        }
-
-        /** @var string $class */
-        $class = end($this->resolving);
-        $parameterName = $parameter->getName();
-        $parameterType = $parameter->getType();
-
-        $message = "Cannot create argument for '{$class}' constructor "
-            . "parameter name '\${$parameterName}' "
-            . "of type '{$parameterType}'.";
-
-        throw new ContainerException($message);
     }
 }

@@ -89,7 +89,7 @@ class ClassResolverTest extends \PHPUnit\Framework\TestCase
 
         // act & assert
         $this->expectException(ContainerException::class);
-        $this->expectExceptionMessage("Cannot create argument for 'IocInterop\Impl\Fake\FakeServiceUnionType' constructor parameter name '\$dependency' of type 'SplFileObject|stdClass'.");
+        $this->expectExceptionMessage("Cannot resolve parameter for IocInterop\Impl\Fake\FakeServiceUnionType::__construct(SplFileObject|stdClass \$dependency)");
         $classResolver->resolveService($ioc, FakeServiceUnionType::class);
     }
 }
