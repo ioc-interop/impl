@@ -20,17 +20,17 @@ class ParametersResolver implements IocParametersResolver
     public function resolveParameters(
         IocContainer $ioc,
         array $parameters,
-        array $args = [],
+        array $arguments = [],
     ) : array
     {
         foreach ($parameters as $parameter) {
             $parameterName = $parameter->getName();
 
-            if (array_key_exists($parameterName, $args)) {
+            if (array_key_exists($parameterName, $arguments)) {
                 continue;
             }
 
-            $args[$parameterName] = $this
+            $arguments[$parameterName] = $this
                 ->parameterResolver
                 ->resolveParameter(
                     $ioc,
@@ -38,6 +38,6 @@ class ParametersResolver implements IocParametersResolver
                 );
         }
 
-        return $args;
+        return $arguments;
     }
 }

@@ -97,7 +97,7 @@ class PublicContainerTest extends \PHPUnit\Framework\TestCase
     public function testCircularPrevention() : void
     {
         $ioc = new PublicContainer();
-        $this->expectException(ContainerException::class);
+        $this->expectException(IocException::class);
         $this->expectExceptionMessage("Circular dependency: IocInterop\Impl\Fake\FakeServiceCircularFoo, IocInterop\Impl\Fake\FakeServiceCircularBar, IocInterop\Impl\Fake\FakeServiceCircularFoo");
         $ioc->getService(FakeServiceCircularFoo::class);
     }

@@ -4,7 +4,7 @@ declare(strict_types=1);
 namespace IocInterop\Impl\Resolver;
 
 use EnvInterop\Interface\EnvGetter;
-use IocInterop\Impl\ContainerException;
+use IocInterop\Impl\IocException;
 use IocInterop\Impl\Fake\FakeGetEnv;
 use IocInterop\Impl\Fake\FakeService;
 use IocInterop\Impl\Fake\FakeServiceInterface;
@@ -23,7 +23,7 @@ class ClassResolverTest extends \PHPUnit\Framework\TestCase
         $classResolver = new ClassResolver();
 
         // act & assert
-        $service = $classResolver->resolveService($ioc, FakeService::class);
+        $service = $classResolver->resolveClass($ioc, FakeService::class);
         $this->assertInstanceOf(FakeService::class, $service);
     }
 
@@ -53,14 +53,14 @@ class ClassResolverTest extends \PHPUnit\Framework\TestCase
                 (object) ['value' => 'bar']);
 
         $classResolver = new ClassResolver();
-        $service = $classResolver->resolveService($ioc, FakeServiceWithAttributes::class);
+        $service = $classResolver->resolveClass($ioc, FakeServiceWithAttributes::class);
         $this->assertSame($service->foo->value, 'foo');
         $this->assertSame($service->bar->value, 'bar');
         $this->assertSame($service->baz, 'BAZ-value');
         $this->assertSame($service->dib, 88);
         $this->assertNull($service->gir);
 
-        $again = $classResolver->resolveService($ioc, FakeServiceWithAttributes::class);
+        $again = $classResolver->resolveClass($ioc, FakeServiceWithAttributes::class);
         $this->assertSame($service->foo, $again->foo);
         $this->assertNotSame($service->bar, $again->bar);
         $this->assertSame($service->bar->value, 'bar');
@@ -76,9 +76,9 @@ class ClassResolverTest extends \PHPUnit\Framework\TestCase
         $classResolver = new ClassResolver();
 
         // act & assert
-        $this->expectException(ContainerException::class);
+        $this->expectException(IocException::class);
         $this->expectExceptionMessage("Service 'IocInterop\Impl\Fake\FakeServiceInterface' is not resolvable.");
-        $classResolver->resolveService($ioc, FakeServiceInterface::class);
+        $classResolver->resolveClass($ioc, FakeServiceInterface::class);
     }
 
     public function testBroken() : void
@@ -88,8 +88,8 @@ class ClassResolverTest extends \PHPUnit\Framework\TestCase
         $classResolver = new ClassResolver();
 
         // act & assert
-        $this->expectException(ContainerException::class);
+        $this->expectException(IocException::class);
         $this->expectExceptionMessage("Cannot resolve parameter for IocInterop\Impl\Fake\FakeServiceUnionType::__construct(SplFileObject|stdClass \$dependency)");
-        $classResolver->resolveService($ioc, FakeServiceUnionType::class);
+        $classResolver->resolveClass($ioc, FakeServiceUnionType::class);
     }
 }

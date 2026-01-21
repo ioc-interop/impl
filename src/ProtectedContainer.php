@@ -47,8 +47,6 @@ class ProtectedContainer implements IocContainer
 
     /**
      * @inheritdoc
-     *
-     * @todo is there any case where we *cannot* create an instance?
      */
     public function hasService(string $serviceName) : bool
     {
@@ -69,13 +67,13 @@ class ProtectedContainer implements IocContainer
 
         return $this
             ->getService(IocClassResolver::class)
-            ->isServiceResolvable($serviceName);
+            ->isClassResolvable($serviceName);
     }
 
     /**
      * @inheritdoc
      */
-    public function newService(string $serviceName, array $serviceArgs = []) : object
+    public function newService(string $serviceName, array $arguments = []) : object
     {
         $serviceName = $this->services->hasServiceAlias($serviceName)
             ? $this->services->getServiceAlias($serviceName)
@@ -85,7 +83,7 @@ class ProtectedContainer implements IocContainer
 
         if ($circular) {
             $message = implode(", ", array_keys($this->building)) . ", $serviceName";
-            throw new ContainerException("Circular dependency: $message");
+            throw new IocException("Circular dependency: $message");
         }
 
         $this->building[$serviceName] = true;
@@ -94,10 +92,10 @@ class ProtectedContainer implements IocContainer
             ? $this
                 ->services
                 ->getServiceBuilder($serviceName)
-                ->buildService($this, $serviceArgs)
+                ->buildService($this, $arguments)
             : $this
                 ->getService(IocClassResolver::class)
-                ->resolveService($this, $serviceName, $serviceArgs);
+                ->resolveClass($this, $serviceName, $arguments);
 
         unset($this->building[$serviceName]);
         return $service;

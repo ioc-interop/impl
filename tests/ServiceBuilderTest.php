@@ -41,7 +41,7 @@ class ServiceBuilderTest extends \PHPUnit\Framework\TestCase
 
         $serviceBuilder->unsetServiceFactory();
         $this->assertFalse($serviceBuilder->hasServiceFactory());
-        $this->expectException(ContainerException::class);
+        $this->expectException(IocException::class);
         $this->expectExceptionMessage("Builder for 'stdClass' has no factory.");
         $serviceBuilder->getServiceFactory();
     }
@@ -49,8 +49,11 @@ class ServiceBuilderTest extends \PHPUnit\Framework\TestCase
     public function testServiceFactoryWithArgs() : void
     {
         $name = stdClass::class;
-        $factory = fn (IocContainer $ioc, array $args = []) : stdClass => (object) $args;
-        $serviceBuilder = $this->newServiceBuilder($name);
+
+        $factory = fn (IocContainer $ioc, array $arguments = []) : stdClass
+            => (object) $arguments;
+
+            $serviceBuilder = $this->newServiceBuilder($name);
         $serviceBuilder->setServiceFactory($factory);
         $ioc = new FakeContainer();
         $expect = (object) ['foo' => 'bar'];

@@ -18,10 +18,10 @@ class PublicContainer extends Services implements IocContainer
     protected array $building = [];
 
     public function __construct(
-        protected IocClassResolver $classResolver = new ClassResolver(),
+        IocClassResolver $classResolver = new ClassResolver(),
     ) {
+        parent::__construct($classResolver);
         $this->setServiceInstance(IocContainer::class, $this);
-        $this->setServiceInstance(IocClassResolver::class, $classResolver);
     }
 
     /**
@@ -59,7 +59,7 @@ class PublicContainer extends Services implements IocContainer
 
         return $this
             ->getService(IocClassResolver::class)
-            ->isServiceResolvable($serviceName);
+            ->isClassResolvable($serviceName);
     }
 
     /**
@@ -67,7 +67,7 @@ class PublicContainer extends Services implements IocContainer
      */
     public function newService(
         string $serviceName,
-        array $serviceArgs = [],
+        array $arguments = [],
     ) : object
     {
         $serviceName = $this->hasServiceAlias($serviceName)
@@ -78,7 +78,7 @@ class PublicContainer extends Services implements IocContainer
 
         if ($circular) {
             $message = implode(", ", array_keys($this->building)) . ", $serviceName";
-            throw new ContainerException("Circular dependency: $message");
+            throw new IocException("Circular dependency: $message");
         }
 
         $this->building[$serviceName] = true;
@@ -86,10 +86,10 @@ class PublicContainer extends Services implements IocContainer
         $service = $this->hasServiceBuilder($serviceName)
             ? $this
                 ->getServiceBuilder($serviceName)
-                ->buildService($this, $serviceArgs)
+                ->buildService($this, $arguments)
             : $this
                 ->getService(IocClassResolver::class)
-                ->resolveService($this, $serviceName, $serviceArgs);
+                ->resolveClass($this, $serviceName, $arguments);
 
         unset($this->building[$serviceName]);
         return $service;

@@ -24,7 +24,7 @@ class ServicesTest extends \PHPUnit\Framework\TestCase
         $this->assertSame($actual, $again);
         $services->unsetServiceInstance($name);
         $this->assertFalse($services->hasServiceInstance($name));
-        $this->expectException(ContainerException::class);
+        $this->expectException(IocException::class);
         $this->expectExceptionMessage("No shared instance for '{$name}'.");
         $services->getServiceInstance($name);
     }
@@ -69,7 +69,7 @@ class ServicesTest extends \PHPUnit\Framework\TestCase
         $this->assertSame($alias, $actual);
         $services->unsetServiceAlias($name);
         $this->assertFalse($services->hasServiceAlias($name));
-        $this->expectException(ContainerException::class);
+        $this->expectException(IocException::class);
         $this->expectExceptionMessage("No alias for '{$name}'.");
         $services->getServiceAlias($name);
 
@@ -86,7 +86,7 @@ class ServicesTest extends \PHPUnit\Framework\TestCase
         $services->setServiceAlias('bar', 'baz');
         $services->setServiceAlias('baz', 'dib');
 
-        $this->expectException(ContainerException::class);
+        $this->expectException(IocException::class);
         $services->setServiceAlias('dib', 'foo');
     }
 }

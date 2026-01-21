@@ -3,7 +3,7 @@ declare(strict_types=1);
 
 namespace IocInterop\Impl\Fake;
 
-use IocInterop\Impl\ContainerException;
+use IocInterop\Impl\IocException;
 use IocInterop\Impl\Resolver\ClassResolver;
 use IocInterop\Interface\IocContainer;
 use IocInterop\Interface\Resolver\IocClassResolver;
@@ -26,7 +26,7 @@ class FakeContainer implements IocContainer
             return $this->classResolver;
         }
 
-        throw new ContainerException("Null container");
+        throw new IocException("Null container");
     }
 
     /**
@@ -34,7 +34,7 @@ class FakeContainer implements IocContainer
      */
     public function hasService(string $serviceName) : bool
     {
-        throw new ContainerException("Null container");
+        throw new IocException("Null container");
     }
 
     /**
@@ -42,6 +42,6 @@ class FakeContainer implements IocContainer
      */
     public function newService(string $serviceName, array $serviceArgs = []) : object
     {
-        throw new ContainerException("Null container");
+        throw new IocException("Null container");
     }
 }

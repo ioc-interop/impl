@@ -3,14 +3,11 @@ declare(strict_types=1);
 
 namespace IocInterop\Impl\Resolver;
 
-use IocInterop\Impl\ContainerException;
+use IocInterop\Impl\IocException;
 use IocInterop\Interface\IocContainer;
 use IocInterop\Interface\Resolver\IocClassResolver;
 use IocInterop\Interface\Resolver\IocParametersResolver;
-use ReflectionAttribute;
 use ReflectionClass;
-use ReflectionNamedType;
-use ReflectionParameter;
 
 class ClassResolver implements IocClassResolver
 {
@@ -32,7 +29,7 @@ class ClassResolver implements IocClassResolver
     /**
      * @inheritdoc
      */
-    public function isServiceResolvable(string $class) : bool
+    public function isClassResolvable(string $class) : bool
     {
         return class_exists($class)
             && $this->getReflection($class)->isInstantiable();
@@ -41,14 +38,14 @@ class ClassResolver implements IocClassResolver
     /**
      * @inheritdoc
      */
-    public function resolveService(
+    public function resolveClass(
         IocContainer $ioc,
         string $class,
-        array $serviceArgs = [],
+        array $arguments = [],
     ) : object
     {
-        if (! $this->isServiceResolvable($class)) {
-            throw new ContainerException(
+        if (! $this->isClassResolvable($class)) {
+            throw new IocException(
                 "Service '{$class}' is not resolvable."
             );
         }
@@ -61,13 +58,13 @@ class ClassResolver implements IocClassResolver
             ?->getParameters()
             ?? [];
 
-        $serviceArgs = $this->parametersResolver->resolveParameters(
+        $arguments = $this->parametersResolver->resolveParameters(
             $ioc,
             $parameters,
-            $serviceArgs,
+            $arguments,
         );
 
-        $service = new $class(...$serviceArgs);
+        $service = new $class(...$arguments);
         array_pop($this->resolving);
         return $service;
     }

@@ -3,10 +3,11 @@ declare(strict_types=1);
 
 namespace IocInterop\Impl;
 
+use IocInterop\Impl\Resolver\ClassResolver;
 use IocInterop\Interface\IocServiceBuilder;
 use IocInterop\Interface\IocServices;
-use IocInterop\Interface\IocClassResolver;
 use IocInterop\Interface\IocTypeAliases;
+use IocInterop\Interface\Resolver\IocClassResolver;
 
 /**
  * @phpstan-import-type ioc_service_name_string from IocTypeAliases
@@ -28,6 +29,12 @@ class Services implements IocServices
      */
     protected array $aliases = [];
 
+    public function __construct(
+        IocClassResolver $classResolver = new ClassResolver(),
+    ) {
+        $this->setServiceInstance(IocClassResolver::class, $classResolver);
+    }
+
     /**
      * @inheritdoc
      */
@@ -42,7 +49,7 @@ class Services implements IocServices
     public function getServiceInstance(string $serviceName) : object
     {
         $instance = $this->instances[$serviceName]
-            ?? throw new ContainerException("No shared instance for '{$serviceName}'.");
+            ?? throw new IocException("No shared instance for '{$serviceName}'.");
 
         return $instance;
     }
@@ -118,7 +125,7 @@ class Services implements IocServices
     public function getServiceAlias(string $serviceName) : string
     {
         if (! isset($this->aliases[$serviceName])) {
-            throw new ContainerException("No alias for '{$serviceName}'.");
+            throw new IocException("No alias for '{$serviceName}'.");
         }
 
         while (isset($this->aliases[$serviceName])) {
@@ -137,7 +144,7 @@ class Services implements IocServices
 
         while (isset($this->aliases[$serviceAlias])) {
             if (isset($circular[$serviceAlias])) {
-                throw new ContainerException("Circular alias");
+                throw new IocException("Circular alias");
             }
 
             $serviceAlias = $this->aliases[$serviceAlias];

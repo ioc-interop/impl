@@ -3,7 +3,7 @@ declare(strict_types=1);
 
 namespace IocInterop\Impl\Resolver;
 
-use IocInterop\Impl\ContainerException;
+use IocInterop\Impl\IocException;
 use IocInterop\Interface\IocContainer;
 use IocInterop\Interface\Resolver\IocParameterResolver;
 use ReflectionAttribute;
@@ -30,29 +30,23 @@ class ParameterResolver implements IocParameterResolver
 
         $parameterType = $parameter->getType();
 
-        if (! $parameterType instanceof ReflectionNamedType) {
-            return $this->resolveParameterDefault(
-                $parameter,
-            );
+        $serviceName = $parameterType instanceof ReflectionNamedType
+            ? $parameterType->getName()
+            : null;
+
+        if ($serviceName && $ioc->hasService($serviceName)) {
+            return $ioc->getService($serviceName);
         }
 
-        $parameterClass = $parameterType->getName();
-
-        if ($ioc->hasService($parameterClass)) {
-            return $ioc->getService($parameterClass);
-        }
-
-        return $this->resolveParameterDefault($parameter);
+        return $parameter->isDefaultValueAvailable()
+            ? $parameter->getDefaultValue()
+            : $this->cannotResolveParameter($parameter);
     }
 
-    protected function resolveParameterDefault(
-        ReflectionParameter $parameter,
-    ) : mixed
+    protected function cannotResolveParameter(
+        ReflectionParameter $parameter
+    ) : never
     {
-        if ($parameter->isDefaultValueAvailable()) {
-            return $parameter->getDefaultValue();
-        }
-
         $message = "Cannot resolve parameter for ";
         $class = $parameter->getDeclaringClass()?->name;
 
@@ -67,6 +61,6 @@ class ParameterResolver implements IocParameterResolver
             . $parameter->getName()
             . ')';
 
-        throw new ContainerException($message);
+        throw new IocException($message);
     }
 }
