@@ -50,6 +50,11 @@ class ClassResolver implements IocClassResolver
             );
         }
 
+        if (in_array($class, $this->resolving)) {
+            $message = implode(", ", $this->resolving) . ", {$class}";
+            throw new IocException("Circular dependency: $message");
+        }
+
         $this->resolving[] = $class;
 
         $parameters = $this

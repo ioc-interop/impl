@@ -33,7 +33,10 @@ class PublicContainer extends Services implements IocContainer
             ? $this->getServiceAlias($serviceName)
             : $serviceName;
 
-        $this->instances[$serviceName] ??= $this->newService($serviceName);
+        $this->instances[$serviceName] ??= $this
+            ->getServiceBuilder($serviceName)
+            ->buildService($this);
+
         return $this->instances[$serviceName];
     }
 
@@ -60,38 +63,5 @@ class PublicContainer extends Services implements IocContainer
         return $this
             ->getService(IocClassResolver::class)
             ->isClassResolvable($serviceName);
-    }
-
-    /**
-     * @inheritdoc
-     */
-    public function newService(
-        string $serviceName,
-        array $arguments = [],
-    ) : object
-    {
-        $serviceName = $this->hasServiceAlias($serviceName)
-            ? $this->getServiceAlias($serviceName)
-            : $serviceName;
-
-        $circular = $this->building[$serviceName] ?? false;
-
-        if ($circular) {
-            $message = implode(", ", array_keys($this->building)) . ", $serviceName";
-            throw new IocException("Circular dependency: $message");
-        }
-
-        $this->building[$serviceName] = true;
-
-        $service = $this->hasServiceBuilder($serviceName)
-            ? $this
-                ->getServiceBuilder($serviceName)
-                ->buildService($this, $arguments)
-            : $this
-                ->getService(IocClassResolver::class)
-                ->resolveClass($this, $serviceName, $arguments);
-
-        unset($this->building[$serviceName]);
-        return $service;
     }
 }

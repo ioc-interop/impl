@@ -84,25 +84,10 @@ class ServiceBuilder implements IocServiceBuilder
      */
     public function runServiceFactory(
         IocContainer $ioc,
-        array $arguments = []
     ) : object
     {
         $serviceFactory = $this->getServiceFactory();
-
-        if (! $arguments) {
-            return $serviceFactory($ioc);
-        }
-
-        $expect = 'array';
-        $actual = $this->factoryParameterTypes[1];
-
-        if ($expect !== $actual) {
-            throw new IocException(
-                "Expected {$expect} as second parameter type, got {$actual} instead."
-            );
-        }
-
-        return $serviceFactory($ioc, $arguments);
+        return $serviceFactory($ioc);
     }
 
     /**
@@ -166,20 +151,19 @@ class ServiceBuilder implements IocServiceBuilder
     /**
      * @inheritdoc
      */
-    public function buildService(
-        IocContainer $ioc,
-        array $arguments = [],
-    ) : object
+    public function buildService(IocContainer $ioc) : object
     {
-        $service = $this->hasServiceFactory()
-            ? $this->runServiceFactory($ioc, $arguments)
-            : $ioc
+        if ($this->hasServiceFactory()) {
+            $factory = $this->getServiceFactory();
+            $service = $factory($ioc);
+        } else {
+            $service = $ioc
                 ->getService(IocClassResolver::class)
                 ->resolveClass(
                     $ioc,
                     $this->serviceName,
-                    $arguments,
                 );
+        }
 
         foreach ($this->getServiceExtenders() as $serviceExtender) {
             $service = $serviceExtender($ioc, $service);

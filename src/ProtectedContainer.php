@@ -20,10 +20,8 @@ class ProtectedContainer implements IocContainer
 
     public function __construct(
         protected IocServices $services = new Services(),
-        protected IocClassResolver $classResolver = new ClassResolver(),
     ) {
         $this->services->setServiceInstance(IocContainer::class, $this);
-        $this->services->setServiceInstance(IocClassResolver::class, $classResolver);
     }
 
     /**
@@ -38,7 +36,10 @@ class ProtectedContainer implements IocContainer
         if (! $this->services->hasServiceInstance($serviceName)) {
             $this->services->setServiceInstance(
                 $serviceName,
-                $this->newService($serviceName)
+                $this
+                    ->services
+                    ->getServiceBuilder($serviceName)
+                    ->buildService($this),
             );
         }
 
@@ -68,36 +69,5 @@ class ProtectedContainer implements IocContainer
         return $this
             ->getService(IocClassResolver::class)
             ->isClassResolvable($serviceName);
-    }
-
-    /**
-     * @inheritdoc
-     */
-    public function newService(string $serviceName, array $arguments = []) : object
-    {
-        $serviceName = $this->services->hasServiceAlias($serviceName)
-            ? $this->services->getServiceAlias($serviceName)
-            : $serviceName;
-
-        $circular = $this->building[$serviceName] ?? false;
-
-        if ($circular) {
-            $message = implode(", ", array_keys($this->building)) . ", $serviceName";
-            throw new IocException("Circular dependency: $message");
-        }
-
-        $this->building[$serviceName] = true;
-
-        $service = $this->services->hasServiceBuilder($serviceName)
-            ? $this
-                ->services
-                ->getServiceBuilder($serviceName)
-                ->buildService($this, $arguments)
-            : $this
-                ->getService(IocClassResolver::class)
-                ->resolveClass($this, $serviceName, $arguments);
-
-        unset($this->building[$serviceName]);
-        return $service;
     }
 }

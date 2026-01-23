@@ -67,33 +67,6 @@ class PublicContainerTest extends \PHPUnit\Framework\TestCase
         $this->assertSame($actual, $again);
     }
 
-    public function testNewService() : void
-    {
-        $name = stdClass::class;
-        $factory = fn (IocContainer $ioc) : stdClass => new stdClass();
-        $ioc = new PublicContainer();
-        $ioc->getServiceBuilder($name);
-        $this->assertTrue($ioc->hasService($name));
-        $actual = $ioc->newService($name);
-        $this->assertInstanceOf($name, $actual);
-        $again = $ioc->newService($name);
-        $this->assertNotSame($actual, $again);
-    }
-
-    public function testNewService_aliased() : void
-    {
-        $name = 'foo';
-        $alias = stdClass::class;
-        $factory = fn (IocContainer $ioc) : stdClass => new stdClass();
-        $ioc = new PublicContainer();
-        $ioc->setServiceAlias($name, $alias);
-        $ioc->getServiceBuilder($alias);
-        $actual = $ioc->newService($name);
-        $this->assertInstanceOf($alias, $actual);
-        $again = $ioc->newService($name);
-        $this->assertNotSame($actual, $again);
-    }
-
     public function testCircularPrevention() : void
     {
         $ioc = new PublicContainer();

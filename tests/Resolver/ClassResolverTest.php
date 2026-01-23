@@ -55,15 +55,12 @@ class ClassResolverTest extends \PHPUnit\Framework\TestCase
         $classResolver = new ClassResolver();
         $service = $classResolver->resolveClass($ioc, FakeServiceWithAttributes::class);
         $this->assertSame($service->foo->value, 'foo');
-        $this->assertSame($service->bar->value, 'bar');
         $this->assertSame($service->baz, 'BAZ-value');
         $this->assertSame($service->dib, 88);
         $this->assertNull($service->gir);
 
         $again = $classResolver->resolveClass($ioc, FakeServiceWithAttributes::class);
         $this->assertSame($service->foo, $again->foo);
-        $this->assertNotSame($service->bar, $again->bar);
-        $this->assertSame($service->bar->value, 'bar');
         $this->assertSame($service->baz, 'BAZ-value');
         $this->assertSame($service->dib, 88);
         $this->assertNull($service->gir);

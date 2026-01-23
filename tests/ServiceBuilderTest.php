@@ -46,21 +46,6 @@ class ServiceBuilderTest extends \PHPUnit\Framework\TestCase
         $serviceBuilder->getServiceFactory();
     }
 
-    public function testServiceFactoryWithArgs() : void
-    {
-        $name = stdClass::class;
-
-        $factory = fn (IocContainer $ioc, array $arguments = []) : stdClass
-            => (object) $arguments;
-
-            $serviceBuilder = $this->newServiceBuilder($name);
-        $serviceBuilder->setServiceFactory($factory);
-        $ioc = new FakeContainer();
-        $expect = (object) ['foo' => 'bar'];
-        $actual = $serviceBuilder->buildService($ioc, ['foo' => 'bar']);
-        $this->assertEquals($expect, $actual);
-    }
-
     public function testServiceExtenders() : void
     {
         $name = stdClass::class;

@@ -77,40 +77,6 @@ class ProtectedContainerTest extends \PHPUnit\Framework\TestCase
         $this->assertSame($actual, $again);
     }
 
-    public function testNewService() : void
-    {
-        // assemble
-        $name = stdClass::class;
-        $factory = fn (IocContainer $ioc) : stdClass => new stdClass();
-        $services = new Services();
-        $services->getServiceBuilder($name)->setServiceFactory($factory);
-        $ioc = new ProtectedContainer($services);
-
-        // act & assert
-        $actual = $ioc->newService($name);
-        $this->assertInstanceOf($name, $actual);
-        $again = $ioc->newService($name);
-        $this->assertNotSame($actual, $again);
-    }
-
-    public function testNewService_aliased() : void
-    {
-        // assemble
-        $name = 'foo';
-        $alias = stdClass::class;
-        $factory = fn (IocContainer $ioc) : stdClass => new stdClass();
-        $services = new Services();
-        $services->setServiceAlias($name, $alias);
-        $services->getServiceBuilder($alias)->setServiceFactory($factory);
-        $ioc = new ProtectedContainer($services);
-
-        // act & assert
-        $actual = $ioc->newService($name);
-        $this->assertInstanceOf($alias, $actual);
-        $again = $ioc->newService($name);
-        $this->assertNotSame($actual, $again);
-    }
-
     public function testHasService() : void
     {
         $services = new Services();
