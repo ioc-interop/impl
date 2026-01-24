@@ -7,7 +7,7 @@ use IocInterop\Interface\IocContainer;
 use IocInterop\Interface\IocContainerFactory;
 use IocInterop\Interface\IocProvider;
 
-class PublicContainerFactory implements IocContainerFactory
+class ContainerFactory implements IocContainerFactory
 {
     /**
      * @param ?IocProvider $provider A "seed" provider that can call other
@@ -20,8 +20,8 @@ class PublicContainerFactory implements IocContainerFactory
 
     public function newContainer() : IocContainer
     {
-        $container = new PublicContainer();
-        $this->provider?->provide($container);
-        return $container;
+        $ioc = new Container();
+        $this->provider?->provide($ioc);
+        return $ioc;
     }
 }

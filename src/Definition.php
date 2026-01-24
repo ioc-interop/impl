@@ -3,13 +3,10 @@ declare(strict_types=1);
 
 namespace IocInterop\Impl;
 
-use Closure;
 use IocInterop\Interface\IocContainer;
 use IocInterop\Interface\IocDefinition;
 use IocInterop\Interface\IocResolver;
 use IocInterop\Interface\IocTypeAliases;
-use ReflectionFunction;
-use ReflectionParameter;
 
 /**
  * @phpstan-import-type ioc_service_extender_callable from IocTypeAliases
@@ -21,12 +18,12 @@ class Definition implements IocDefinition
     /**
      * @var ?ioc_service_factory_callable
      */
-    protected mixed $serviceFactory = null;
+    protected mixed $factory = null;
 
     /**
      * @var ioc_service_extender_callable[]
      */
-    protected array $serviceExtenders = [];
+    protected array $extenders = [];
 
     public function __construct(protected string $serviceName)
     {
@@ -37,7 +34,7 @@ class Definition implements IocDefinition
      */
     public function hasFactory() : bool
     {
-        return (bool) $this->serviceFactory;
+        return (bool) $this->factory;
     }
 
     /**
@@ -45,16 +42,16 @@ class Definition implements IocDefinition
      */
     public function getFactory() : callable
     {
-        return $this->serviceFactory
+        return $this->factory
             ?? throw new IocException("Builder for '{$this->serviceName}' has no factory.");
     }
 
     /**
      * @inheritdoc
      */
-    public function setFactory(callable $serviceFactory) : self
+    public function setFactory(callable $factory) : self
     {
-        $this->serviceFactory = $serviceFactory;
+        $this->factory = $factory;
         return $this;
     }
 
@@ -63,16 +60,16 @@ class Definition implements IocDefinition
      */
     public function unsetFactory() : self
     {
-        $this->serviceFactory = null;
+        $this->factory = null;
         return $this;
     }
 
     /**
      * @inheritdoc
      */
-    public function addExtender(callable $serviceExtender) : self
+    public function addExtender(callable $extender) : self
     {
-        $this->serviceExtenders[] = $serviceExtender;
+        $this->extenders[] = $extender;
         return $this;
     }
 
@@ -81,7 +78,7 @@ class Definition implements IocDefinition
      */
     public function hasExtenders() : bool
     {
-        return (bool) $this->serviceExtenders;
+        return (bool) $this->extenders;
     }
 
     /**
@@ -89,18 +86,18 @@ class Definition implements IocDefinition
      */
     public function getExtenders() : array
     {
-        return $this->serviceExtenders;
+        return $this->extenders;
     }
 
     /**
      * @inheritdoc
      */
-    public function setExtenders(array $serviceExtenders) : self
+    public function setExtenders(array $extenders) : self
     {
         $this->unsetExtenders();
 
-        foreach ($serviceExtenders as $serviceExtender) {
-            $this->addExtender($serviceExtender);
+        foreach ($extenders as $extender) {
+            $this->addExtender($extender);
         }
 
         return $this;
@@ -111,7 +108,7 @@ class Definition implements IocDefinition
      */
     public function unsetExtenders() : self
     {
-        $this->serviceExtenders = [];
+        $this->extenders = [];
         return $this;
     }
 
@@ -124,16 +121,15 @@ class Definition implements IocDefinition
             $factory = $this->getFactory();
             $service = $factory($ioc);
         } else {
-            $service = $ioc
-                ->getService(IocResolver::class)
+            $service = $ioc->getService(IocResolver::class)
                 ->resolve(
                     $ioc,
                     $this->serviceName,
                 );
         }
 
-        foreach ($this->getExtenders() as $serviceExtender) {
-            $service = $serviceExtender($ioc, $service);
+        foreach ($this->getExtenders() as $extender) {
+            $service = $extender($ioc, $service);
         }
 
         return $service;

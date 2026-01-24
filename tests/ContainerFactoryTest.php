@@ -6,11 +6,11 @@ namespace IocInterop\Impl;
 use IocInterop\Impl\Fake\FakeProvider;
 use stdClass;
 
-class PublicContainerFactoryTest extends \PHPUnit\Framework\TestCase
+class ContainerFactoryTest extends \PHPUnit\Framework\TestCase
 {
     public function test() : void
     {
-        $iocContainerFactory = new PublicContainerFactory(
+        $iocContainerFactory = new ContainerFactory(
             provider: new FakeProvider(),
         );
 

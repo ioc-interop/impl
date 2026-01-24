@@ -7,7 +7,7 @@ use IocInterop\Interface\IocContainer;
 use IocInterop\Interface\IocInstanceFactory;
 use IocInterop\Interface\IocResolver;
 
-class Factory implements IocInstanceFactory
+class InstanceFactory implements IocInstanceFactory
 {
     public function __construct(
         protected IocContainer $ioc,

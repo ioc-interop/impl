@@ -3,21 +3,21 @@ declare(strict_types=1);
 
 namespace IocInterop\Impl;
 
-use IocInterop\Impl\Resolver;
+use IocInterop\Interface\IocContainer;
 use IocInterop\Interface\IocDefinition;
+use IocInterop\Interface\IocResolver;
 use IocInterop\Interface\IocServices;
 use IocInterop\Interface\IocTypeAliases;
-use IocInterop\Interface\IocResolver;
 
 /**
  * @phpstan-import-type ioc_service_name_string from IocTypeAliases
  */
-class Services implements IocServices
+class Container implements IocContainer, IocServices
 {
     /**
-     * @var array<ioc_service_name_string, object>
+     * @var array<ioc_service_name_string, ioc_service_name_string>
      */
-    protected array $instances = [];
+    protected array $aliases = [];
 
     /**
      * @var array<ioc_service_name_string, IocDefinition>
@@ -25,13 +25,58 @@ class Services implements IocServices
     protected array $definitions = [];
 
     /**
-     * @var array<ioc_service_name_string, ioc_service_name_string>
+     * @var array<ioc_service_name_string, object>
      */
-    protected array $aliases = [];
+    protected array $instances = [];
 
-    public function __construct(IocResolver $resolver = new Resolver())
-    {
+    public function __construct(
+        protected IocResolver $resolver = new Resolver()
+    ) {
         $this->setInstance(IocResolver::class, $resolver);
+        $this->setInstance(IocContainer::class, $this);
+    }
+
+    /**
+     * @inheritdoc
+     */
+    public function getService(string $serviceName) : object
+    {
+        $serviceName = $this->hasAlias($serviceName)
+            ? $this->getAlias($serviceName)
+            : $serviceName;
+
+        if (! $this->hasInstance($serviceName)) {
+            $this->setInstance(
+                $serviceName,
+                $this->getDefinition($serviceName)->buildInstance($this),
+            );
+        }
+
+        return $this->getInstance($serviceName);
+    }
+
+    /**
+     * @inheritdoc
+     */
+    public function hasService(string $serviceName) : bool
+    {
+        $serviceName = $this->hasAlias($serviceName)
+            ? $this->getAlias($serviceName)
+            : $serviceName;
+
+        if ($this->hasInstance($serviceName)) {
+            return true;
+        }
+
+        $hasDefinedFactory = $this->hasDefinition($serviceName)
+            && $this->getDefinition($serviceName)->hasFactory();
+
+        if ($hasDefinedFactory) {
+            return true;
+        }
+
+        return $this->getService(IocResolver::class)
+            ->isResolvable($serviceName);
     }
 
     /**

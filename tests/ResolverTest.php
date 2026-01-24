@@ -10,7 +10,7 @@ use IocInterop\Impl\Fake\FakeServiceInterface;
 use IocInterop\Impl\Fake\FakeServiceUnionType;
 use IocInterop\Impl\Fake\FakeServiceWithAttributes;
 use IocInterop\Impl\IocException;
-use IocInterop\Impl\PublicContainer;
+use IocInterop\Impl\Container;
 use IocInterop\Interface\IocContainer;
 use stdClass;
 
@@ -19,7 +19,7 @@ class ResolverTest extends \PHPUnit\Framework\TestCase
     public function testAutowired() : void
     {
         // assemble
-        $ioc = new PublicContainer();
+        $ioc = new Container();
         $resolver = new Resolver();
 
         // act & assert
@@ -30,7 +30,7 @@ class ResolverTest extends \PHPUnit\Framework\TestCase
     public function testAttributed() : void
     {
         // assemble
-        $ioc = new PublicContainer();
+        $ioc = new Container();
 
         $ioc->setAlias(EnvGetter::class, FakeGetEnv::class);
 
@@ -69,19 +69,19 @@ class ResolverTest extends \PHPUnit\Framework\TestCase
     public function testNotResolvable() : void
     {
         // assemble
-        $ioc = new PublicContainer();
+        $ioc = new Container();
         $resolver = new Resolver();
 
         // act & assert
         $this->expectException(IocException::class);
-        $this->expectExceptionMessage("Service 'IocInterop\Impl\Fake\FakeServiceInterface' is not resolvable.");
+        $this->expectExceptionMessage("Class 'IocInterop\Impl\Fake\FakeServiceInterface' is not resolvable.");
         $resolver->resolve($ioc, FakeServiceInterface::class);
     }
 
     public function testBroken() : void
     {
         // assemble
-        $ioc = new PublicContainer();
+        $ioc = new Container();
         $resolver = new Resolver();
 
         // act & assert
@@ -93,7 +93,7 @@ class ResolverTest extends \PHPUnit\Framework\TestCase
     public function testOverrideParameters() : void
     {
         // assemble
-        $ioc = new PublicContainer();
+        $ioc = new Container();
         $resolver = new Resolver();
 
         // act & assert
