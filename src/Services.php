@@ -3,11 +3,11 @@ declare(strict_types=1);
 
 namespace IocInterop\Impl;
 
-use IocInterop\Impl\Resolver\ClassResolver;
-use IocInterop\Interface\IocServiceBuilder;
+use IocInterop\Impl\Resolver;
+use IocInterop\Interface\IocDefinition;
 use IocInterop\Interface\IocServices;
 use IocInterop\Interface\IocTypeAliases;
-use IocInterop\Interface\Resolver\IocClassResolver;
+use IocInterop\Interface\IocResolver;
 
 /**
  * @phpstan-import-type ioc_service_name_string from IocTypeAliases
@@ -20,25 +20,24 @@ class Services implements IocServices
     protected array $instances = [];
 
     /**
-     * @var array<ioc_service_name_string, IocServiceBuilder>
+     * @var array<ioc_service_name_string, IocDefinition>
      */
-    protected array $builders = [];
+    protected array $definitions = [];
 
     /**
      * @var array<ioc_service_name_string, ioc_service_name_string>
      */
     protected array $aliases = [];
 
-    public function __construct(
-        IocClassResolver $classResolver = new ClassResolver(),
-    ) {
-        $this->setServiceInstance(IocClassResolver::class, $classResolver);
+    public function __construct(IocResolver $resolver = new Resolver())
+    {
+        $this->setInstance(IocResolver::class, $resolver);
     }
 
     /**
      * @inheritdoc
      */
-    public function hasServiceInstance(string $serviceName) : bool
+    public function hasInstance(string $serviceName) : bool
     {
         return isset($this->instances[$serviceName]);
     }
@@ -46,7 +45,7 @@ class Services implements IocServices
     /**
      * @inheritdoc
      */
-    public function getServiceInstance(string $serviceName) : object
+    public function getInstance(string $serviceName) : object
     {
         $instance = $this->instances[$serviceName]
             ?? throw new IocException("No shared instance for '{$serviceName}'.");
@@ -57,7 +56,7 @@ class Services implements IocServices
     /**
      * @inheritdoc
      */
-    public function setServiceInstance(string $serviceName, object $instance) : void
+    public function setInstance(string $serviceName, object $instance) : void
     {
         $this->instances[$serviceName] = $instance;
     }
@@ -65,7 +64,7 @@ class Services implements IocServices
     /**
      * @inheritdoc
      */
-    public function unsetServiceInstance(string $serviceName) : void
+    public function unsetInstance(string $serviceName) : void
     {
         unset($this->instances[$serviceName]);
     }
@@ -73,48 +72,48 @@ class Services implements IocServices
     /**
      * @inheritdoc
      */
-    public function hasServiceBuilder(string $serviceName) : bool
+    public function hasDefinition(string $serviceName) : bool
     {
-        return isset($this->builders[$serviceName]);
+        return isset($this->definitions[$serviceName]);
     }
 
     /**
      * @inheritdoc
      */
-    public function getServiceBuilder(string $serviceName) : IocServiceBuilder
+    public function getDefinition(string $serviceName) : IocDefinition
     {
-        $this->builders[$serviceName] ??= $this->newServiceBuilder($serviceName);
-        return $this->builders[$serviceName];
+        $this->definitions[$serviceName] ??= $this->newDefinition($serviceName);
+        return $this->definitions[$serviceName];
     }
 
     /**
      * @inheritdoc
      */
-    public function setServiceBuilder(string $serviceName, IocServiceBuilder $serviceBuilder) : void
+    public function setDefinition(string $serviceName, IocDefinition $definition) : void
     {
-        $this->builders[$serviceName] = $serviceBuilder;
+        $this->definitions[$serviceName] = $definition;
     }
 
     /**
      * @inheritdoc
      */
-    public function unsetServiceBuilder(string $serviceName) : void
+    public function unsetDefinition(string $serviceName) : void
     {
-        unset($this->builders[$serviceName]);
+        unset($this->definitions[$serviceName]);
     }
 
     /**
      * @inheritdoc
      */
-    public function newServiceBuilder(string $serviceName) : IocServiceBuilder
+    public function newDefinition(string $serviceName) : IocDefinition
     {
-        return new ServiceBuilder($serviceName);
+        return new Definition($serviceName);
     }
 
     /**
      * @inheritdoc
      */
-    public function hasServiceAlias(string $serviceName) : bool
+    public function hasAlias(string $serviceName) : bool
     {
         return isset($this->aliases[$serviceName]);
     }
@@ -122,7 +121,7 @@ class Services implements IocServices
     /**
      * @inheritdoc
      */
-    public function getServiceAlias(string $serviceName) : string
+    public function getAlias(string $serviceName) : string
     {
         if (! isset($this->aliases[$serviceName])) {
             throw new IocException("No alias for '{$serviceName}'.");
@@ -138,26 +137,26 @@ class Services implements IocServices
     /**
      * @inheritdoc
      */
-    public function setServiceAlias(string $serviceName, string $serviceAlias) : void
+    public function setAlias(string $serviceName, string $alias) : void
     {
         $circular = [];
 
-        while (isset($this->aliases[$serviceAlias])) {
-            if (isset($circular[$serviceAlias])) {
+        while (isset($this->aliases[$alias])) {
+            if (isset($circular[$alias])) {
                 throw new IocException("Circular alias");
             }
 
-            $serviceAlias = $this->aliases[$serviceAlias];
-            $circular[$serviceAlias] = true;
+            $alias = $this->aliases[$alias];
+            $circular[$alias] = true;
         }
 
-        $this->aliases[$serviceName] = $serviceAlias;
+        $this->aliases[$serviceName] = $alias;
     }
 
     /**
      * @inheritdoc
      */
-    public function unsetServiceAlias(string $serviceName) : void
+    public function unsetAlias(string $serviceName) : void
     {
         unset($this->aliases[$serviceName]);
     }

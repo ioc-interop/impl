@@ -1,17 +1,17 @@
 <?php
 declare(strict_types=1);
 
-namespace IocInterop\Impl\Resolver;
+namespace IocInterop\Impl;
 
 use IocInterop\Interface\IocContainer;
 use IocInterop\Interface\IocInstanceFactory;
-use IocInterop\Interface\Resolver\IocClassResolver;
+use IocInterop\Interface\IocResolver;
 
-class InstanceFactory implements IocInstanceFactory
+class Factory implements IocInstanceFactory
 {
     public function __construct(
         protected IocContainer $ioc,
-        protected IocClassResolver $classResolver = new ClassResolver(),
+        protected IocResolver $resolver = new Resolver(),
     ) {
     }
 
@@ -23,7 +23,7 @@ class InstanceFactory implements IocInstanceFactory
         array $arguments = [],
     ) : object
     {
-        return $this->classResolver->resolveClass(
+        return $this->resolver->resolve(
             $this->ioc,
             $class,
             $arguments,

@@ -1,11 +1,11 @@
 <?php
 declare(strict_types=1);
 
-namespace IocInterop\Impl\Resolver;
+namespace IocInterop\Impl;
 
 use IocInterop\Impl\IocException;
 use IocInterop\Interface\IocContainer;
-use IocInterop\Interface\Resolver\IocParameterResolver;
+use IocInterop\Interface\IocParameterResolver;
 use ReflectionAttribute;
 use ReflectionNamedType;
 use ReflectionParameter;

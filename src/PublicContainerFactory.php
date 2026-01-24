@@ -5,23 +5,23 @@ namespace IocInterop\Impl;
 
 use IocInterop\Interface\IocContainer;
 use IocInterop\Interface\IocContainerFactory;
-use IocInterop\Interface\IocServicesProvider;
+use IocInterop\Interface\IocProvider;
 
 class PublicContainerFactory implements IocContainerFactory
 {
     /**
-     * @param ?IocServicesProvider $provider A "seed" provider that can call other
+     * @param ?IocProvider $provider A "seed" provider that can call other
      * providers as needed.
      */
     public function __construct(
-        protected ?IocServicesProvider $provider = null
+        protected ?IocProvider $provider = null
     ) {
     }
 
     public function newContainer() : IocContainer
     {
         $container = new PublicContainer();
-        $this->provider?->provideServices($container);
+        $this->provider?->provide($container);
         return $container;
     }
 }

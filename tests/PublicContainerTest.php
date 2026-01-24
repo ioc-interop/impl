@@ -20,7 +20,7 @@ class PublicContainerTest extends \PHPUnit\Framework\TestCase
         $name = stdClass::class;
         $instance = new stdClass();
         $ioc = new PublicContainer();
-        $ioc->setServiceInstance($name, $instance);
+        $ioc->setInstance($name, $instance);
         $actual = $ioc->getService($name);
         $this->assertSame($instance, $actual);
         $again = $ioc->getService($name);
@@ -33,8 +33,8 @@ class PublicContainerTest extends \PHPUnit\Framework\TestCase
         $alias = stdClass::class;
         $instance = new stdClass();
         $ioc = new PublicContainer();
-        $ioc->setServiceAlias($name, $alias);
-        $ioc->setServiceInstance($alias, $instance);
+        $ioc->setAlias($name, $alias);
+        $ioc->setInstance($alias, $instance);
         $this->assertTrue($ioc->hasService($name));
         $actual = $ioc->getService($name);
         $this->assertSame($instance, $actual);
@@ -46,7 +46,7 @@ class PublicContainerTest extends \PHPUnit\Framework\TestCase
     {
         $name = stdClass::class;
         $ioc = new PublicContainer();
-        $ioc->getServiceBuilder($name);
+        $ioc->getDefinition($name);
         $actual = $ioc->getService($name);
         $this->assertInstanceOf($name, $actual);
         $again = $ioc->getService($name);
@@ -59,12 +59,25 @@ class PublicContainerTest extends \PHPUnit\Framework\TestCase
         $alias = stdClass::class;
         $factory = fn (IocContainer $ioc) : stdClass => new stdClass();
         $ioc = new PublicContainer();
-        $ioc->setServiceAlias($name, $alias);
-        $ioc->getServiceBuilder($alias);
+        $ioc->setAlias($name, $alias);
+        $ioc->getDefinition($alias);
         $actual = $ioc->getService($name);
         $this->assertInstanceOf($alias, $actual);
         $again = $ioc->getService($name);
         $this->assertSame($actual, $again);
+    }
+
+    public function testHasService() : void
+    {
+        $ioc = new PublicContainer();
+        $ioc->setInstance('foo', new stdClass());
+        $ioc->getDefinition('bar')->setFactory(fn (IocContainer $ioc) => new stdClass());
+        $ioc->setAlias('baz', 'foo');
+
+        $this->assertTrue($ioc->hasService('foo'));
+        $this->assertTrue($ioc->hasService('bar'));
+        $this->assertTrue($ioc->hasService('baz'));
+        $this->assertFalse($ioc->hasService('dib'));
     }
 
     public function testCircularPrevention() : void

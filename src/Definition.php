@@ -5,8 +5,8 @@ namespace IocInterop\Impl;
 
 use Closure;
 use IocInterop\Interface\IocContainer;
-use IocInterop\Interface\IocServiceBuilder;
-use IocInterop\Interface\Resolver\IocClassResolver;
+use IocInterop\Interface\IocDefinition;
+use IocInterop\Interface\IocResolver;
 use IocInterop\Interface\IocTypeAliases;
 use ReflectionFunction;
 use ReflectionParameter;
@@ -16,13 +16,8 @@ use ReflectionParameter;
  * @phpstan-import-type ioc_service_factory_callable from IocTypeAliases
  * @phpstan-import-type ioc_service_name_string from IocTypeAliases
  */
-class ServiceBuilder implements IocServiceBuilder
+class Definition implements IocDefinition
 {
-    /**
-     * @var array<int, ?string>
-     */
-    protected array $factoryParameterTypes = [];
-
     /**
      * @var ?ioc_service_factory_callable
      */
@@ -40,7 +35,7 @@ class ServiceBuilder implements IocServiceBuilder
     /**
      * @inheritdoc
      */
-    public function hasServiceFactory() : bool
+    public function hasFactory() : bool
     {
         return (bool) $this->serviceFactory;
     }
@@ -48,7 +43,7 @@ class ServiceBuilder implements IocServiceBuilder
     /**
      * @inheritdoc
      */
-    public function getServiceFactory() : callable
+    public function getFactory() : callable
     {
         return $this->serviceFactory
             ?? throw new IocException("Builder for '{$this->serviceName}' has no factory.");
@@ -57,53 +52,25 @@ class ServiceBuilder implements IocServiceBuilder
     /**
      * @inheritdoc
      */
-    public function setServiceFactory(callable $serviceFactory) : self
+    public function setFactory(callable $serviceFactory) : self
     {
         $this->serviceFactory = $serviceFactory;
-
-        $this->factoryParameterTypes = [
-            0 => null,
-            1 => null,
-        ];
-
-        $closure = $this->serviceFactory instanceof Closure
-            ? $this->serviceFactory
-            : Closure::fromCallable($this->serviceFactory);
-
-        $parameters = new ReflectionFunction($closure)->getParameters();
-
-        foreach ($parameters as $i => $parameter) {
-            $this->factoryParameterTypes[$i] = (string) $parameter->getType();
-        }
-
         return $this;
     }
 
     /**
      * @inheritdoc
      */
-    public function runServiceFactory(
-        IocContainer $ioc,
-    ) : object
-    {
-        $serviceFactory = $this->getServiceFactory();
-        return $serviceFactory($ioc);
-    }
-
-    /**
-     * @inheritdoc
-     */
-    public function unsetServiceFactory() : self
+    public function unsetFactory() : self
     {
         $this->serviceFactory = null;
-        $this->factoryParameterTypes = [];
         return $this;
     }
 
     /**
      * @inheritdoc
      */
-    public function addServiceExtender(callable $serviceExtender) : self
+    public function addExtender(callable $serviceExtender) : self
     {
         $this->serviceExtenders[] = $serviceExtender;
         return $this;
@@ -112,7 +79,7 @@ class ServiceBuilder implements IocServiceBuilder
     /**
      * @inheritdoc
      */
-    public function hasServiceExtenders() : bool
+    public function hasExtenders() : bool
     {
         return (bool) $this->serviceExtenders;
     }
@@ -120,7 +87,7 @@ class ServiceBuilder implements IocServiceBuilder
     /**
      * @inheritdoc
      */
-    public function getServiceExtenders() : array
+    public function getExtenders() : array
     {
         return $this->serviceExtenders;
     }
@@ -128,12 +95,12 @@ class ServiceBuilder implements IocServiceBuilder
     /**
      * @inheritdoc
      */
-    public function setServiceExtenders(array $serviceExtenders) : self
+    public function setExtenders(array $serviceExtenders) : self
     {
-        $this->unsetServiceExtenders();
+        $this->unsetExtenders();
 
         foreach ($serviceExtenders as $serviceExtender) {
-            $this->addServiceExtender($serviceExtender);
+            $this->addExtender($serviceExtender);
         }
 
         return $this;
@@ -142,7 +109,7 @@ class ServiceBuilder implements IocServiceBuilder
     /**
      * @inheritdoc
      */
-    public function unsetServiceExtenders() : self
+    public function unsetExtenders() : self
     {
         $this->serviceExtenders = [];
         return $this;
@@ -151,21 +118,21 @@ class ServiceBuilder implements IocServiceBuilder
     /**
      * @inheritdoc
      */
-    public function buildService(IocContainer $ioc) : object
+    public function buildInstance(IocContainer $ioc) : object
     {
-        if ($this->hasServiceFactory()) {
-            $factory = $this->getServiceFactory();
+        if ($this->hasFactory()) {
+            $factory = $this->getFactory();
             $service = $factory($ioc);
         } else {
             $service = $ioc
-                ->getService(IocClassResolver::class)
-                ->resolveClass(
+                ->getService(IocResolver::class)
+                ->resolve(
                     $ioc,
                     $this->serviceName,
                 );
         }
 
-        foreach ($this->getServiceExtenders() as $serviceExtender) {
+        foreach ($this->getExtenders() as $serviceExtender) {
             $service = $serviceExtender($ioc, $service);
         }
 

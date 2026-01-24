@@ -4,17 +4,17 @@ declare(strict_types=1);
 namespace IocInterop\Impl\Fake;
 
 use IocInterop\Interface\IocContainer;
-use IocInterop\Interface\IocServicesProvider;
+use IocInterop\Interface\IocProvider;
 use IocInterop\Interface\IocServices;
 use stdClass;
 
-class FakeProvider implements IocServicesProvider
+class FakeProvider implements IocProvider
 {
-    public function provideServices(IocServices $services) : void
+    public function provide(IocServices $services) : void
     {
         $services
-            ->getServiceBuilder(stdClass::class)
-            ->setServiceFactory(
+            ->getDefinition(stdClass::class)
+            ->setFactory(
                 fn (IocContainer $ioc) : stdClass => new stdClass(),
             );
     }

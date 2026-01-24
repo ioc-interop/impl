@@ -5,8 +5,8 @@ namespace IocInterop\Impl;
 
 use IocInterop\Interface\IocContainer;
 use IocInterop\Interface\IocServices;
-use IocInterop\Interface\Resolver\IocClassResolver;
-use IocInterop\Impl\Resolver\ClassResolver;
+use IocInterop\Interface\IocResolver;
+use IocInterop\Impl\Resolver;
 
 /**
  * A container of predefined services that cannot be reset in-flight.
@@ -21,7 +21,7 @@ class ProtectedContainer implements IocContainer
     public function __construct(
         protected IocServices $services = new Services(),
     ) {
-        $this->services->setServiceInstance(IocContainer::class, $this);
+        $this->services->setInstance(IocContainer::class, $this);
     }
 
     /**
@@ -29,21 +29,21 @@ class ProtectedContainer implements IocContainer
      */
     public function getService(string $serviceName) : object
     {
-        $serviceName = $this->services->hasServiceAlias($serviceName)
-            ? $this->services->getServiceAlias($serviceName)
+        $serviceName = $this->services->hasAlias($serviceName)
+            ? $this->services->getAlias($serviceName)
             : $serviceName;
 
-        if (! $this->services->hasServiceInstance($serviceName)) {
-            $this->services->setServiceInstance(
+        if (! $this->services->hasInstance($serviceName)) {
+            $this->services->setInstance(
                 $serviceName,
                 $this
                     ->services
-                    ->getServiceBuilder($serviceName)
-                    ->buildService($this),
+                    ->getDefinition($serviceName)
+                    ->buildInstance($this),
             );
         }
 
-        return $this->services->getServiceInstance($serviceName);
+        return $this->services->getInstance($serviceName);
     }
 
     /**
@@ -51,23 +51,23 @@ class ProtectedContainer implements IocContainer
      */
     public function hasService(string $serviceName) : bool
     {
-        $serviceName = $this->services->hasServiceAlias($serviceName)
-            ? $this->services->getServiceAlias($serviceName)
+        $serviceName = $this->services->hasAlias($serviceName)
+            ? $this->services->getAlias($serviceName)
             : $serviceName;
 
-        if ($this->services->hasServiceInstance($serviceName)) {
+        if ($this->services->hasInstance($serviceName)) {
             return true;
         }
 
-        $hasBuilderAndFactory = $this->services->hasServiceBuilder($serviceName)
-            && $this->services->getServiceBuilder($serviceName)->hasServiceFactory();
+        $hasBuilderAndFactory = $this->services->hasDefinition($serviceName)
+            && $this->services->getDefinition($serviceName)->hasFactory();
 
         if ($hasBuilderAndFactory) {
             return true;
         }
 
         return $this
-            ->getService(IocClassResolver::class)
-            ->isClassResolvable($serviceName);
+            ->getService(IocResolver::class)
+            ->isResolvable($serviceName);
     }
 }

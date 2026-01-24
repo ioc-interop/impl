@@ -1,15 +1,15 @@
 <?php
 declare(strict_types=1);
 
-namespace IocInterop\Impl\Resolver;
+namespace IocInterop\Impl;
 
 use IocInterop\Impl\IocException;
 use IocInterop\Interface\IocContainer;
-use IocInterop\Interface\Resolver\IocClassResolver;
-use IocInterop\Interface\Resolver\IocParametersResolver;
+use IocInterop\Interface\IocResolver;
+use IocInterop\Interface\IocParametersResolver;
 use ReflectionClass;
 
-class ClassResolver implements IocClassResolver
+class Resolver implements IocResolver
 {
     /**
      * @var array<string, ReflectionClass<object>>
@@ -29,7 +29,7 @@ class ClassResolver implements IocClassResolver
     /**
      * @inheritdoc
      */
-    public function isClassResolvable(string $class) : bool
+    public function isResolvable(string $class) : bool
     {
         return class_exists($class)
             && $this->getReflection($class)->isInstantiable();
@@ -38,13 +38,13 @@ class ClassResolver implements IocClassResolver
     /**
      * @inheritdoc
      */
-    public function resolveClass(
+    public function resolve(
         IocContainer $ioc,
         string $class,
         array $arguments = [],
     ) : object
     {
-        if (! $this->isClassResolvable($class)) {
+        if (! $this->isResolvable($class)) {
             throw new IocException(
                 "Service '{$class}' is not resolvable."
             );

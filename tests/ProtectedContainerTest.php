@@ -15,7 +15,7 @@ class ProtectedContainerTest extends \PHPUnit\Framework\TestCase
         $name = stdClass::class;
         $instance = new stdClass();
         $services = new Services();
-        $services->setServiceInstance($name, $instance);
+        $services->setInstance($name, $instance);
         $ioc = new ProtectedContainer($services);
 
         // act & assert
@@ -32,8 +32,8 @@ class ProtectedContainerTest extends \PHPUnit\Framework\TestCase
         $alias = stdClass::class;
         $instance = new stdClass();
         $services = new Services();
-        $services->setServiceAlias($name, $alias);
-        $services->setServiceInstance($alias, $instance);
+        $services->setAlias($name, $alias);
+        $services->setInstance($alias, $instance);
         $ioc = new ProtectedContainer($services);
 
         // act & assert
@@ -49,7 +49,7 @@ class ProtectedContainerTest extends \PHPUnit\Framework\TestCase
         $name = stdClass::class;
         $factory = fn (IocContainer $ioc) : stdClass => new stdClass();
         $services = new Services();
-        $services->getServiceBuilder($name)->setServiceFactory($factory);
+        $services->getDefinition($name)->setFactory($factory);
         $ioc = new ProtectedContainer($services);
 
         // act & assert
@@ -66,8 +66,8 @@ class ProtectedContainerTest extends \PHPUnit\Framework\TestCase
         $alias = stdClass::class;
         $factory = fn (IocContainer $ioc) : stdClass => new stdClass();
         $services = new Services();
-        $services->setServiceAlias($name, $alias);
-        $services->getServiceBuilder($alias)->setServiceFactory($factory);
+        $services->setAlias($name, $alias);
+        $services->getDefinition($alias)->setFactory($factory);
         $ioc = new ProtectedContainer($services);
 
         // act & assert
@@ -80,9 +80,9 @@ class ProtectedContainerTest extends \PHPUnit\Framework\TestCase
     public function testHasService() : void
     {
         $services = new Services();
-        $services->setServiceInstance('foo', new stdClass());
-        $services->getServiceBuilder('bar')->setServiceFactory(fn (IocContainer $ioc) => new stdClass());
-        $services->setServiceAlias('baz', 'foo');
+        $services->setInstance('foo', new stdClass());
+        $services->getDefinition('bar')->setFactory(fn (IocContainer $ioc) => new stdClass());
+        $services->setAlias('baz', 'foo');
         $ioc = new ProtectedContainer($services);
 
         $this->assertTrue($ioc->hasService('foo'));

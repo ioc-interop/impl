@@ -4,89 +4,89 @@ declare(strict_types=1);
 namespace IocInterop\Impl;
 
 use stdClass;
-use IocInterop\Interface\IocServiceBuilder;
+use IocInterop\Interface\IocDefinition;
 
 class ServicesTest extends \PHPUnit\Framework\TestCase
 {
     protected Services $services;
 
-    public function testServiceInstance() : void
+    public function testInstance() : void
     {
         $name = stdClass::class;
         $instance = new stdClass();
         $services = new Services();
-        $this->assertFalse($services->hasServiceInstance($name));
-        $services->setServiceInstance($name, $instance);
-        $this->assertTrue($services->hasServiceInstance($name));
-        $actual = $services->getServiceInstance($name);
+        $this->assertFalse($services->hasInstance($name));
+        $services->setInstance($name, $instance);
+        $this->assertTrue($services->hasInstance($name));
+        $actual = $services->getInstance($name);
         $this->assertSame($instance, $actual);
-        $again = $services->getServiceInstance($name);
+        $again = $services->getInstance($name);
         $this->assertSame($actual, $again);
-        $services->unsetServiceInstance($name);
-        $this->assertFalse($services->hasServiceInstance($name));
+        $services->unsetInstance($name);
+        $this->assertFalse($services->hasInstance($name));
         $this->expectException(IocException::class);
         $this->expectExceptionMessage("No shared instance for '{$name}'.");
-        $services->getServiceInstance($name);
+        $services->getInstance($name);
     }
 
-    public function testServiceBuilder() : void
+    public function testDefinition() : void
     {
         $name = stdClass::class;
         $services = new Services();
-        $this->assertFalse($services->hasServiceBuilder($name));
-        $builder = $services->newServiceBuilder($name);
-        $services->setServiceBuilder($name, $builder);
-        $this->assertTrue($services->hasServiceBuilder($name));
-        $actual = $services->getServiceBuilder($name);
+        $this->assertFalse($services->hasDefinition($name));
+        $builder = $services->newDefinition($name);
+        $services->setDefinition($name, $builder);
+        $this->assertTrue($services->hasDefinition($name));
+        $actual = $services->getDefinition($name);
         $this->assertSame($builder, $actual);
-        $again = $services->getServiceBuilder($name);
+        $again = $services->getDefinition($name);
         $this->assertSame($actual, $again);
-        $services->unsetServiceBuilder($name);
-        $this->assertFalse($services->hasServiceBuilder($name));
+        $services->unsetDefinition($name);
+        $this->assertFalse($services->hasDefinition($name));
     }
 
-    public function testServiceBuilder_implicitNewAndSet() : void
+    public function testDefinition_implicitNewAndSet() : void
     {
         $name = stdClass::class;
         $services = new Services();
-        $this->assertFalse($services->hasServiceBuilder($name));
-        $actual = $services->getServiceBuilder($name);
-        $this->assertInstanceOf(IocServiceBuilder::class, $actual);
-        $this->assertTrue($services->hasServiceBuilder($name));
-        $again = $services->getServiceBuilder($name);
+        $this->assertFalse($services->hasDefinition($name));
+        $actual = $services->getDefinition($name);
+        $this->assertInstanceOf(IocDefinition::class, $actual);
+        $this->assertTrue($services->hasDefinition($name));
+        $again = $services->getDefinition($name);
         $this->assertSame($actual, $again);
     }
 
-    public function testServiceAlias() : void
+    public function testAlias() : void
     {
         $name = 'foo.bar';
         $alias = stdClass::class;
         $services = new Services();
-        $this->assertFalse($services->hasServiceAlias($name));
-        $services->setServiceAlias($name, $alias);
-        $this->assertTrue($services->hasServiceAlias($name));
-        $actual = $services->getServiceAlias($name);
+        $this->assertFalse($services->hasAlias($name));
+        $services->setAlias($name, $alias);
+        $this->assertTrue($services->hasAlias($name));
+        $actual = $services->getAlias($name);
         $this->assertSame($alias, $actual);
-        $services->unsetServiceAlias($name);
-        $this->assertFalse($services->hasServiceAlias($name));
+        $services->unsetAlias($name);
+        $this->assertFalse($services->hasAlias($name));
         $this->expectException(IocException::class);
         $this->expectExceptionMessage("No alias for '{$name}'.");
-        $services->getServiceAlias($name);
+        $services->getAlias($name);
 
         // recursive aliasing
-        $services->setServiceAlias('bar.baz', 'foo.bar');
-        $actual = $services->getServiceAlias('bar.baz');
+        $services->setAlias('bar.baz', 'foo.bar');
+        $actual = $services->getAlias('bar.baz');
         $this->assertSame($alias, $actual);
     }
 
-    public function testServiceAlias_circular() : void
+    public function testAlias_circular() : void
     {
         $services = new Services();
-        $services->setServiceAlias('foo', 'bar');
-        $services->setServiceAlias('bar', 'baz');
-        $services->setServiceAlias('baz', 'dib');
+        $services->setAlias('foo', 'bar');
+        $services->setAlias('bar', 'baz');
+        $services->setAlias('baz', 'dib');
 
         $this->expectException(IocException::class);
-        $services->setServiceAlias('dib', 'foo');
+        $services->setAlias('dib', 'foo');
     }
 }

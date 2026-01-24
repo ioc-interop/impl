@@ -1,11 +1,11 @@
 <?php
 declare(strict_types=1);
 
-namespace IocInterop\Impl\Resolver;
+namespace IocInterop\Impl;
 
 use IocInterop\Interface\IocContainer;
-use IocInterop\Interface\Resolver\IocParameterResolver;
-use IocInterop\Interface\Resolver\IocParametersResolver;
+use IocInterop\Interface\IocParameterResolver;
+use IocInterop\Interface\IocParametersResolver;
 
 class ParametersResolver implements IocParametersResolver
 {
