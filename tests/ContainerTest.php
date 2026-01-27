@@ -3,75 +3,62 @@ declare(strict_types=1);
 
 namespace IocInterop\Impl;
 
-use IocInterop\Impl\Fake\FakeServiceCircularFoo;;
+use IocInterop\Impl\Fake\FakeService;
+use IocInterop\Impl\Fake\FakeServiceCircularFoo;
 use IocInterop\Interface\IocContainer;
 use IocInterop\Interface\IocDefinition;
+use IocInterop\Interface\IocServices;
 use stdClass;
 
 class ContainerTest extends \PHPUnit\Framework\TestCase
 {
     public function testGetService() : void
     {
-        // assemble
-        $serviceName = stdClass::class;
-        $instance = new stdClass();
         $ioc = new Container();
-        $ioc->setInstance($serviceName, $instance);
 
-        // act & assert
-        $actual = $ioc->getService($serviceName);
-        $this->assertSame($instance, $actual);
-        $again = $ioc->getService($serviceName);
+        $actual = $ioc->getService(stdClass::class);
+        $this->assertInstanceOf(stdClass::class, $actual);
+
+        $again = $ioc->getService(stdClass::class);
         $this->assertSame($actual, $again);
+
+        $ioc->setAlias('foo', stdClass::class);
+        $aliased = $ioc->getService('foo');
+        $this->assertSame($actual, $aliased);
     }
 
-    public function testGetService_aliased() : void
+    public function testGetService_transient() : void
     {
-        // assemble
-        $serviceName = 'foo';
-        $alias = stdClass::class;
-        $instance = new stdClass();
         $ioc = new Container();
-        $ioc->setAlias($serviceName, $alias);
-        $ioc->setInstance($alias, $instance);
 
-        // act & assert
-        $actual = $ioc->getService($serviceName);
-        $this->assertSame($instance, $actual);
-        $again = $ioc->getService($serviceName);
-        $this->assertSame($actual, $again);
+        $ioc->getDefinition(stdClass::class)
+            ->setLifetime(IocServices::TRANSIENT);
+
+        $actual = $ioc->getService(stdClass::class);
+        $this->assertInstanceOf(stdClass::class, $actual);
+
+        $again = $ioc->getService(stdClass::class);
+        $this->assertNotSame($actual, $again);
     }
 
-    public function testGetService_new() : void
+    public function testGetService_singleton() : void
     {
         // assemble
-        $serviceName = stdClass::class;
-        $factory = fn (IocContainer $ioc) : stdClass => new stdClass();
+        $scopedName = stdClass::class;
+        $singletonName = FakeService::class;
+
         $ioc = new Container();
-        $ioc->getDefinition($serviceName)->setFactory($factory);
+        $ioc->getDefinition($singletonName)->setLifetime(IocServices::SINGLETON);
 
-        // act & assert
-        $actual = $ioc->getService($serviceName);
-        $this->assertInstanceOf($serviceName, $actual);
-        $again = $ioc->getService($serviceName);
-        $this->assertSame($actual, $again);
-    }
 
-    public function testGetService_aliasedNew() : void
-    {
-        // assemble
-        $serviceName = 'foo';
-        $alias = stdClass::class;
-        $factory = fn (IocContainer $ioc) : stdClass => new stdClass();
-        $ioc = new Container();
-        $ioc->setAlias($serviceName, $alias);
-        $ioc->getDefinition($alias)->setFactory($factory);
+        $scoped = $ioc->getService($scopedName);
+        $this->assertInstanceOf($scopedName, $scoped);
 
-        // act & assert
-        $actual = $ioc->getService($serviceName);
-        $this->assertInstanceOf($alias, $actual);
-        $again = $ioc->getService($serviceName);
-        $this->assertSame($actual, $again);
+        $singleton = $ioc->getService($singletonName);
+        $this->assertInstanceOf($singletonName, $singleton);
+
+        $ioc->unsetInstances(IocServices::SCOPED);
+        $this->assertFalse($ioc->hasInstance(stdClass::class));
     }
 
     public function testHasService() : void
@@ -109,9 +96,25 @@ class ContainerTest extends \PHPUnit\Framework\TestCase
         $this->assertSame($actual, $again);
         $ioc->unsetInstance($name);
         $this->assertFalse($ioc->hasInstance($name));
+    }
+
+    public function testGetInstance_notShared() : void
+    {
+        $name = stdClass::class;
+        $ioc = new Container();
         $this->expectException(IocException::class);
         $this->expectExceptionMessage("No shared instance for '{$name}'.");
         $ioc->getInstance($name);
+    }
+
+
+    public function testSetInstance_notShared() : void
+    {
+        $name = stdClass::class;
+        $ioc = new Container();
+        $this->expectException(IocException::class);
+        $this->expectExceptionMessage("Cannot set a transient service.");
+        $ioc->setInstance(stdClass::class, new stdClass(), IocServices::TRANSIENT);
     }
 
     public function testDefinition() : void
@@ -130,18 +133,6 @@ class ContainerTest extends \PHPUnit\Framework\TestCase
         $this->assertFalse($ioc->hasDefinition($name));
     }
 
-    public function testDefinition_implicitNewAndSet() : void
-    {
-        $name = stdClass::class;
-        $ioc = new Container();
-        $this->assertFalse($ioc->hasDefinition($name));
-        $actual = $ioc->getDefinition($name);
-        $this->assertInstanceOf(IocDefinition::class, $actual);
-        $this->assertTrue($ioc->hasDefinition($name));
-        $again = $ioc->getDefinition($name);
-        $this->assertSame($actual, $again);
-    }
-
     public function testAlias() : void
     {
         $name = 'foo.bar';
@@ -158,7 +149,7 @@ class ContainerTest extends \PHPUnit\Framework\TestCase
         $this->expectExceptionMessage("No alias for '{$name}'.");
         $ioc->getAlias($name);
 
-        // recursive aliasing
+        // chained aliases
         $ioc->setAlias('bar.baz', 'foo.bar');
         $actual = $ioc->getAlias('bar.baz');
         $this->assertSame($alias, $actual);

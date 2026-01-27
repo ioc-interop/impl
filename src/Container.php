@@ -10,6 +10,7 @@ use IocInterop\Interface\IocServices;
 use IocInterop\Interface\IocTypeAliases;
 
 /**
+ * @phpstan-import-type ioc_service_lifetime_string from IocTypeAliases
  * @phpstan-import-type ioc_service_name_string from IocTypeAliases
  */
 class Container implements IocContainer, IocServices
@@ -25,15 +26,18 @@ class Container implements IocContainer, IocServices
     protected array $definitions = [];
 
     /**
-     * @var array<ioc_service_name_string, object>
+     * @var array<ioc_service_lifetime_string, array<ioc_service_name_string, object>>
      */
-    protected array $instances = [];
+    protected array $instances = [
+        IocServices::SCOPED => [],
+        IocServices::SINGLETON => [],
+    ];
 
     public function __construct(
         protected IocResolver $resolver = new Resolver()
     ) {
-        $this->setInstance(IocResolver::class, $resolver);
-        $this->setInstance(IocContainer::class, $this);
+        $this->setInstance(IocResolver::class, $resolver, IocServices::SINGLETON);
+        $this->setInstance(IocContainer::class, $this, IocServices::SINGLETON);
     }
 
     /**
@@ -45,14 +49,23 @@ class Container implements IocContainer, IocServices
             ? $this->getAlias($serviceName)
             : $serviceName;
 
-        if (! $this->hasInstance($serviceName)) {
+        if ($this->hasInstance($serviceName)) {
+            return $this->getInstance($serviceName);
+        }
+
+        $definition = $this->getDefinition($serviceName);
+        $instance = $definition->buildInstance($this);
+        $lifetime = $definition->getLifetime();
+
+        if ($lifetime !== IocServices::TRANSIENT) {
             $this->setInstance(
                 $serviceName,
-                $this->getDefinition($serviceName)->buildInstance($this),
+                $instance,
+                $lifetime,
             );
         }
 
-        return $this->getInstance($serviceName);
+        return $instance;
     }
 
     /**
@@ -84,7 +97,8 @@ class Container implements IocContainer, IocServices
      */
     public function hasInstance(string $serviceName) : bool
     {
-        return isset($this->instances[$serviceName]);
+        return isset($this->instances[IocServices::SCOPED][$serviceName])
+            || isset($this->instances[IocServices::SINGLETON][$serviceName]);
     }
 
     /**
@@ -92,18 +106,30 @@ class Container implements IocContainer, IocServices
      */
     public function getInstance(string $serviceName) : object
     {
-        $instance = $this->instances[$serviceName]
+        return $this->instances[IocServices::SCOPED][$serviceName]
+            ?? $this->instances[IocServices::SINGLETON][$serviceName]
             ?? throw new IocException("No shared instance for '{$serviceName}'.");
-
-        return $instance;
     }
 
     /**
      * @inheritdoc
      */
-    public function setInstance(string $serviceName, object $instance) : void
+    public function setInstance(
+        string $serviceName,
+        object $instance,
+        string $lifetime = IocServices::SCOPED,
+    ) : void
     {
-        $this->instances[$serviceName] = $instance;
+        if ($lifetime === IocServices::TRANSIENT) {
+            throw new IocException("Cannot set a transient service.");
+        }
+
+        $otherLifetime = $lifetime === IocServices::SCOPED
+            ? IocServices::SINGLETON
+            : IocServices::SCOPED;
+
+        $this->instances[$lifetime][$serviceName] = $instance;
+        unset($this->instances[$otherLifetime][$serviceName]);
     }
 
     /**
@@ -111,7 +137,16 @@ class Container implements IocContainer, IocServices
      */
     public function unsetInstance(string $serviceName) : void
     {
-        unset($this->instances[$serviceName]);
+        unset($this->instances[IocServices::SCOPED][$serviceName]);
+        unset($this->instances[IocServices::SINGLETON][$serviceName]);
+    }
+
+    /**
+     * @inheritdoc
+     */
+    public function unsetInstances(string $lifetime) : void
+    {
+        $this->instances[$lifetime] = [];
     }
 
     /**

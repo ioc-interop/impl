@@ -6,12 +6,14 @@ namespace IocInterop\Impl;
 use IocInterop\Interface\IocContainer;
 use IocInterop\Interface\IocDefinition;
 use IocInterop\Interface\IocResolver;
+use IocInterop\Interface\IocServices;
 use IocInterop\Interface\IocTypeAliases;
 
 /**
  * @phpstan-import-type ioc_service_extender_callable from IocTypeAliases
  * @phpstan-import-type ioc_service_factory_callable from IocTypeAliases
  * @phpstan-import-type ioc_service_name_string from IocTypeAliases
+ * @phpstan-import-type ioc_service_lifetime_string from IocTypeAliases
  */
 class Definition implements IocDefinition
 {
@@ -24,6 +26,11 @@ class Definition implements IocDefinition
      * @var ioc_service_extender_callable[]
      */
     protected array $extenders = [];
+
+    /**
+     * @var ioc_service_lifetime_string
+     */
+    protected string $lifetime = IocServices::SCOPED;
 
     public function __construct(protected string $serviceName)
     {
@@ -110,6 +117,23 @@ class Definition implements IocDefinition
     {
         $this->extenders = [];
         return $this;
+    }
+
+    /**
+     * @inheritdoc
+     */
+    public function setLifetime(string $lifetime) : self
+    {
+        $this->lifetime = $lifetime;
+        return $this;
+    }
+
+    /**
+     * @inheritdoc
+     */
+    public function getLifetime() : string
+    {
+        return $this->lifetime ?? IocServices::SCOPED;
     }
 
     /**
