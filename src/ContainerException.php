@@ -6,6 +6,6 @@ namespace IocInterop\Impl;
 use IocInterop\Interface\IocThrowable;
 use RuntimeException;
 
-class IocException extends RuntimeException implements IocThrowable
+class ContainerException extends RuntimeException implements IocThrowable
 {
 }

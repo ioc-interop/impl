@@ -10,18 +10,17 @@ use IocInterop\Interface\IocProvider;
 class ContainerFactory implements IocContainerFactory
 {
     /**
-     * @param ?IocProvider $provider A "seed" provider that can call other
-     * providers as needed.
+     * @var array<string, object>
      */
-    public function __construct(
-        protected ?IocProvider $provider = null
-    ) {
-    }
+    public array $instances = [];
+
+    /**
+     * @var array<string, callable(IocContainer):object>
+     */
+    public array $factories = [];
 
     public function newContainer() : IocContainer
     {
-        $ioc = new Container();
-        $this->provider?->provide($ioc);
-        return $ioc;
+        return new Container($this->instances, $this->factories);
     }
 }
