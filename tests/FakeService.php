@@ -9,7 +9,7 @@ class FakeService
 {
     public function __construct(
         public ?stdClass $dependency = null,
-        public string $nonNamedType = 'fake'
+        public string $nonNamedType = 'fake',
     ) {
     }
 }

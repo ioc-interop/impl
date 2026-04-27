@@ -37,7 +37,6 @@ class Container implements IocContainer
 
         $this->instances[$serviceName] ??= $this->newService($serviceName);
         return $this->instances[$serviceName];
-
     }
 
     protected function newService(string $serviceName) : object

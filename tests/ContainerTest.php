@@ -13,14 +13,11 @@ class ContainerTest extends \PHPUnit\Framework\TestCase
     {
         $containerFactory = new ContainerFactory();
 
-        $containerFactory->instances = [
-            stdClass::class => new stdClass(),
-        ];
+        $containerFactory->instances = [stdClass::class => new stdClass()];
 
         $containerFactory->factories = [
-            FakeService::class => fn (IocContainer $ioc) => new FakeService(
-                dependency: $ioc->getService(stdClass::class),
-            ),
+            FakeService::class => fn (IocContainer $ioc)
+                => new FakeService(dependency: $ioc->getService(stdClass::class)),
             'foo' => fn (IocContainer $ioc) => (object) ['bar' => 'baz'],
         ];
 

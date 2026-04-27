@@ -1,4 +1,5 @@
 /.php-styler.cache
+/.phpunit.cache
 /.phpunit.result.cache
 /composer.lock
 /tmp

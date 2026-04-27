@@ -5,7 +5,6 @@ namespace IocInterop\Impl;
 
 use IocInterop\Interface\IocContainer;
 use IocInterop\Interface\IocContainerFactory;
-use IocInterop\Interface\IocProvider;
 
 class ContainerFactory implements IocContainerFactory
 {

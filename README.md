@@ -3,58 +3,79 @@
 [![PDS Skeleton](https://img.shields.io/badge/pds-skeleton-blue.svg?style=flat-square)](https://github.com/php-pds/skeleton)
 [![PDS Composer Script Names](https://img.shields.io/badge/pds-composer--script--names-blue?style=flat-square)](https://github.com/php-pds/composer-script-names)
 
-This package offers a reference implementation all the Ioc-Interop interface
-to present a typical "open" autowired container.
+Reference implementations of the [Ioc-Interop][] interfaces for PHP 8.4+.
 
 ## Installation
 
 ```
-$ composer require ioc-interop/impl
+composer require ioc-interop/impl
 ```
 
-## Getting Started
+## Usage
+
+Compose a container by populating a [_IocContainerFactory_][] with shared
+instances and service factories, then ask it for a new container:
 
 ```php
-use IocInterop\Impl\Container;
+use IocInterop\Impl\ContainerFactory;
 use IocInterop\Interface\IocContainer;
 
-$ioc = new Container();
+$containerFactory = new ContainerFactory();
+
+$containerFactory->instances = [
+    PDO::class => new PDO('sqlite::memory:'),
+];
+
+$containerFactory->factories = [
+    Logger::class => fn (IocContainer $ioc) => new Logger(),
+    UserService::class => fn (IocContainer $ioc) => new UserService(
+        $ioc->getService(PDO::class),
+        $ioc->getService(Logger::class),
+    ),
+];
+
+$ioc = $containerFactory->newContainer();
 ```
 
-## Getting Services
+Retrieve services by name. The first call to `getService()` resolves and
+shares the instance for subsequent calls:
 
 ```php
-$foo = $ioc->getService(Foo::class);
+$logger = $ioc->getService(Logger::class);
+$users = $ioc->getService(UserService::class);
 ```
 
-## Setting Service Instances
+Check for service availability:
 
 ```php
-$ioc->setService(Foo::class, new Foo());
+if ($ioc->hasService(Logger::class)) {
+    // ...
+}
 ```
 
-## Setting Service Aliases
+Requesting a service that is not registered throws a `ContainerException`:
 
 ```php
-$ioc->setAlias('foo.foo', Foo::class);
-$foo = $ioc->getService('foo.foo');
+use IocInterop\Interface\IocThrowable;
+
+try {
+    $ioc->getService('does-not-exist');
+} catch (IocThrowable $e) {
+    // ...
+}
 ```
 
-## Defining Services
+## Classes
 
-### Service Factory
+| Interface              | Implementation       |
+| ---------------------- | -------------------- |
+| _IocContainer_         | `Container`          |
+| _IocContainerFactory_  | `ContainerFactory`   |
+| _IocThrowable_         | `ContainerException` |
 
-```php
-$ioc->getDefinition(Foo::class)
-    ->setFactory(fn (IocContainer $ioc) : Foo => return new Foo());
-```
+All classes are in the `IocInterop\Impl` namespace.
 
-### Service Extenders
+See the [Ioc-Interop][] interface package for the full specification.
 
-```php
-$ioc->getDefinition(Foo::class)
-    ->addExtender(function (IocContainer $ioc, Foo $foo) : Foo {
-        $foo->bar = 'baz';
-        return $foo;
-    });
-```
+[Ioc-Interop]: https://github.com/ioc-interop/interface
+[_IocContainerFactory_]: https://github.com/ioc-interop/interface#ioccontainerfactory
