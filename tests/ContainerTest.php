@@ -5,6 +5,7 @@ namespace IocInterop\Impl;
 
 use IocInterop\Impl\FakeService;
 use IocInterop\Interface\IocContainer;
+use IocInterop\Interface\IocThrowable;
 use stdClass;
 
 class ContainerTest extends \PHPUnit\Framework\TestCase
@@ -46,6 +47,24 @@ class ContainerTest extends \PHPUnit\Framework\TestCase
 
         $this->expectException(ContainerException::class);
         $this->expectExceptionMessage('Service not available: noSuchService');
+        $ioc->getService('noSuchService');
+    }
+
+    public function testFactoryResultIsSharedAcrossCalls() : void
+    {
+        $ioc = $this->newContainer();
+
+        $this->assertSame(
+            $ioc->getService(FakeService::class),
+            $ioc->getService(FakeService::class),
+        );
+    }
+
+    public function testMissThrowsIocThrowable() : void
+    {
+        $ioc = $this->newContainer();
+
+        $this->expectException(IocThrowable::class);
         $ioc->getService('noSuchService');
     }
 }
