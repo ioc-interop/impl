@@ -2,7 +2,7 @@
     "name": "ioc-interop/impl",
     "type": "library",
     "description": "Reference implementations of Ioc-Interop.",
-    "keywords": [],
+    "keywords": ["ioc", "container", "service", "di", "dependency injection"],
     "license": "MIT",
     "homepage": "https://github.com/ioc-interop/impl",
     "authors": [
