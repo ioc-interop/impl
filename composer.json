@@ -42,11 +42,5 @@
         "cs-fix": "./vendor/bin/php-styler apply",
         "test": "./vendor/bin/phpunit",
         "test-coverage": "./vendor/bin/phpunit --coverage-html=./tmp/coverage"
-    },
-    "repositories": [
-        {
-            "type": "path",
-            "url": "../interface"
-        }
-    ]
+    }
 }
