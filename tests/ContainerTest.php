@@ -52,6 +52,24 @@ class ContainerTest extends \PHPUnit\Framework\TestCase
         $ioc->getService('noSuchService');
     }
 
+    public function testNumericServiceNames() : void
+    {
+        $containerFactory = new ContainerFactory();
+
+        // PHP coerces these array keys to int; the names remain valid
+        $containerFactory->instances = ['123' => new stdClass()];
+
+        $containerFactory->factories = [
+            '456' => fn (IocContainer $ioc) => $ioc->getService('123'),
+        ];
+
+        $ioc = $containerFactory->newContainer();
+
+        $this->assertTrue($ioc->hasService('123'));
+        $this->assertTrue($ioc->hasService('456'));
+        $this->assertSame($ioc->getService('123'), $ioc->getService('456'));
+    }
+
     public function testFactoryResultIsSharedAcrossCalls() : void
     {
         $ioc = $this->newContainer();

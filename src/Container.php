@@ -10,13 +10,13 @@ use Throwable;
 class Container implements IocContainer
 {
     /**
-     * @var array<string, true>
+     * @var array<array-key, true>
      */
     protected array $resolving = [];
 
     /**
-     * @param array<string, object> $instances
-     * @param array<string, callable(IocContainer):object> $factories
+     * @param array<array-key, object> $instances
+     * @param array<array-key, callable(IocContainer):object> $factories
      */
     public function __construct(
         protected array $instances = [],

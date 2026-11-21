@@ -9,12 +9,12 @@ use IocInterop\Interface\IocContainerFactory;
 class ContainerFactory implements IocContainerFactory
 {
     /**
-     * @var array<string, object>
+     * @var array<array-key, object>
      */
     public array $instances = [];
 
     /**
-     * @var array<string, callable(IocContainer):object>
+     * @var array<array-key, callable(IocContainer):object>
      */
     public array $factories = [];
 
