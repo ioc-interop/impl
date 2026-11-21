@@ -13,7 +13,7 @@ composer require ioc-interop/impl
 
 ## Usage
 
-Compose a container by populating a [_IocContainerFactory_][] with shared
+Compose a container by populating an [_IocContainerFactory_][] with shared
 instances and service factories, then ask it for a new container:
 
 ```php
