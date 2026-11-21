@@ -145,16 +145,19 @@ class ContainerTest extends \PHPUnit\Framework\TestCase
 
     public function testCircularFailureDoesNotPoisonLaterCalls() : void
     {
-        $containerFactory = new ContainerFactory();
+        $flag = new class {
+            public bool $circular = true;
+        };
 
-        $containerFactory->instances = [stdClass::class => new stdClass()];
+        $containerFactory = new ContainerFactory();
 
         $containerFactory->factories = [
             'a' => fn (IocContainer $ioc)
                 => (object) ['b' => $ioc->getService('b')],
             'b' => fn (IocContainer $ioc)
-                => (object) ['a' => $ioc->getService('a')],
-            'ok' => fn (IocContainer $ioc) => $ioc->getService(stdClass::class),
+                => $flag->circular
+                    ? (object) ['a' => $ioc->getService('a')]
+                    : new stdClass(),
         ];
 
         $ioc = $containerFactory->newContainer();
@@ -166,10 +169,10 @@ class ContainerTest extends \PHPUnit\Framework\TestCase
             // expected; the guard must clear its state on the way out
         }
 
-        $this->assertSame(
-            $ioc->getService(stdClass::class),
-            $ioc->getService('ok'),
-        );
+        // the same path, no longer circular, must now resolve
+        $flag->circular = false;
+        $a = $ioc->getService('a');
+        $this->assertInstanceOf(stdClass::class, $a);
     }
 
     public function testFactoryErrorIsWrapped() : void
