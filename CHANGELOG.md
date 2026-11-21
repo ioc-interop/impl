@@ -18,8 +18,9 @@ First public release.
   path.
 
 - `ContainerFactory` implements `IocContainerFactory`; every
-  `newContainer()` call returns a new `Container` sharing the factory's
-  registries.
+  `newContainer()` call returns a new `Container` seeded with the
+  factory's registries. Pre-built instances are shared across containers;
+  factory-built services are per container.
 
 - `ContainerException extends RuntimeException implements IocThrowable`.
 
