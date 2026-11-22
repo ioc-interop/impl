@@ -67,8 +67,8 @@ class Container implements IocContainer
             throw new ContainerException("Circular service dependency: {$path}");
         }
 
-        $this->resolving[$serviceName] = true;
         $factory = $this->factories[$serviceName];
+        $this->resolving[$serviceName] = true;
 
         try {
             return $factory($this);
