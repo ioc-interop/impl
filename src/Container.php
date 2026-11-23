@@ -44,7 +44,6 @@ class Container implements IocContainer
 
         try {
             $this->instances[$serviceName] ??= $this->newService($serviceName);
-
             return $this->instances[$serviceName];
         } catch (IocThrowable $e) {
             throw $e;
