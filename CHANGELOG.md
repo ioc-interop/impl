@@ -1,5 +1,22 @@
 # Change Log
 
+## 1.0.0
+
+First stable release.
+
+- Require `ioc-interop/interface` at `^1.0`.
+
+- Widened the `Container` and `ContainerFactory` registry key types from
+  `string` to `array-key`, so that numeric service names pass static analysis.
+
+- `newService()` now looks up the factory before marking the service as
+  resolving, so a failed lookup no longer leaves the marker set.
+
+- Strengthened the circular-dependency cleanup test, and added a test for
+  numeric service names.
+
+- Documentation fixes.
+
 ## 1.0.0-beta1
 
 First public release.
